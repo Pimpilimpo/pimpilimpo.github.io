@@ -46,6 +46,7 @@
       border-radius: 8px;
       overflow: hidden;
       box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+      pointer-events: auto; /* Allow pointer events only within container */
     }
     
     #potree_render_area {
@@ -55,16 +56,23 @@
       width: 100% !important;
       height: 100% !important;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      pointer-events: auto; /* Ensure render area gets mouse events */
     }
     
     #potree_sidebar_container {
       position: absolute !important;
       top: 0 !important;
-      right: 0 !important;
+      left: 0 !important; /* Move to left side */
       z-index: 1000 !important;
       width: 300px !important;
       height: 100% !important;
       pointer-events: auto;
+      transition: transform 0.3s ease; /* Add smooth animation */
+    }
+    
+    /* Hidden state for sidebar */
+    #potree_sidebar_container.hidden {
+      transform: translateX(-100%) !important;
     }
     
     /* Ensure canvas fills the render area */
@@ -74,6 +82,21 @@
       left: 0 !important;
       width: 100% !important;
       height: 100% !important;
+      pointer-events: auto;
+    }
+    
+    /* Fix scrolling for the page */
+    body {
+      overflow-y: auto !important;
+    }
+    
+    /* Ensure potree doesn't block page scrolling */
+    #potree_wrapper {
+      pointer-events: none; /* Block events on wrapper */
+    }
+    
+    #potree_wrapper .potree_container {
+      pointer-events: auto; /* Allow events only on container */
     }
   </style>
 
@@ -264,6 +287,38 @@ viewer.setDescription("");
 viewer.loadGUI(() => {
   viewer.setLanguage('en');
   $("#menu_appearance").next().show();
+  
+  // Override the default toggleSidebar function to work with our custom styling
+  viewer.toggleSidebar = function() {
+    const sidebar = document.getElementById('potree_sidebar_container');
+    const renderArea = document.getElementById('potree_render_area');
+    
+    if (sidebar.classList.contains('hidden')) {
+      // Show sidebar
+      sidebar.classList.remove('hidden');
+      renderArea.style.left = '300px';
+      renderArea.style.width = 'calc(100% - 300px)';
+    } else {
+      // Hide sidebar
+      sidebar.classList.add('hidden');
+      renderArea.style.left = '0px';
+      renderArea.style.width = '100%';
+    }
+  };
+  
+  // Find and attach the toggle function to the sidebar toggle button
+  setTimeout(() => {
+    const toggleButton = document.querySelector('#potree_sidebar_container .potree_sidebar_header .potree_sidebar_toggle');
+    if (toggleButton) {
+      toggleButton.onclick = () => viewer.toggleSidebar();
+    }
+    
+    // Also look for other toggle buttons that might exist
+    const allToggleButtons = document.querySelectorAll('[title="toggle sidebar"]');
+    allToggleButtons.forEach(button => {
+      button.onclick = () => viewer.toggleSidebar();
+    });
+  }, 1000);
 });
 
 // Load point cloud using metadata.json format
