@@ -20,8 +20,8 @@
   <link rel="stylesheet" href="./static/css/index.css">
   <link rel="icon" href="./static/images/favicon.svg">
 
-  <!-- POTREE CSS (make sure you copied Potree's build/ folder to potree/ in your repo) -->
-  <link rel="stylesheet" href="potree/build/potree/potree.css">
+  <!-- POTREE CSS -->
+  <link rel="stylesheet" href="Potree_1.8.2/build/potree/potree.css">
 
   <style>
     html, body { height: 100%; }
@@ -200,6 +200,9 @@
 <script src="Potree_1.8.2/libs/jquery/jquery-3.1.1.min.js"></script>
 <script src="Potree_1.8.2/libs/proj4/proj4.js"></script>
 <script src="Potree_1.8.2/libs/three.js/build/three.min.js"></script>
+<script src="Potree_1.8.2/libs/other/BinaryHeap.js"></script>
+<script src="Potree_1.8.2/libs/tween/tween.min.js"></script>
+<script src="Potree_1.8.2/libs/d3/d3.js"></script>
 <script src="Potree_1.8.2/libs/plasio/js/laslaz.js"></script>
 
 <!-- Then load Potree -->
@@ -209,7 +212,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     // Create Potree viewer bound to the render div
     if (typeof Potree === 'undefined') {
-      console.error('Potree JS not found. Make sure potree/build/potree/potree.js is present in the repo.');
+      console.error('Potree JS not found. Make sure Potree_1.8.2/build/potree/potree.js is present in the repo.');
       return;
     }
 
@@ -217,13 +220,25 @@
     viewer.setEDLEnabled(true);
     viewer.setFOV(60);
     viewer.setPointBudget(1_000_000);
-    viewer.setBackground("black");
+    viewer.setBackground("gradient");
+    
+    viewer.loadSettingsFromURL();
+    
+    viewer.loadGUI(() => {
+      viewer.setLanguage('en');
+      $("#menu_appearance").next().show();
+    });
 
-    // Replace this with your actual Hugging Face metadata.json URL
-    const metadataUrl = 'pointcloud_test/metadata.json';
-
-    viewer.loadPointCloud("pointcloud_test/metadata.json", "MyPointCloud", e => {
-      viewer.scene.view.setView([0,0,0], 100); // Adjust as needed
+    // Correct way to load point cloud in Potree 1.8.2
+    Potree.loadPointCloud("pointcloud_test/metadata.json", "MyPointCloud", e => {
+      viewer.scene.addPointCloud(e.pointcloud);
+      
+      let material = e.pointcloud.material;
+      material.size = 1;
+      material.pointSizeType = Potree.PointSizeType.ADAPTIVE;
+      material.shape = Potree.PointShape.SQUARE;
+      
+      viewer.fitToScreen();
     });
   });
 </script>
