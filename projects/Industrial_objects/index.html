@@ -288,32 +288,93 @@ viewer.loadGUI(() => {
   viewer.setLanguage('en');
   $("#menu_appearance").next().show();
   
-  // Override the default toggleSidebar function to work with our custom styling
+  // Add custom confidence slider after GUI loads
+  setTimeout(() => {
+    // Add custom confidence control section
+    const sidebarContent = document.querySelector('#potree_sidebar_container');
+    if (sidebarContent) {
+      const confidenceSection = document.createElement('div');
+      confidenceSection.className = 'potree_sidebar_section';
+      confidenceSection.style.cssText = `
+        background: #2a2a2a;
+        border: 1px solid #444;
+        margin: 5px;
+        border-radius: 3px;
+      `;
+      confidenceSection.innerHTML = `
+        <div style="background: #333; padding: 8px; border-bottom: 1px solid #444; font-weight: bold; color: white;">
+          Confidence Filter
+        </div>
+        <div style="padding: 15px;">
+          <div style="margin-bottom: 10px;">
+            <label style="color: white; font-size: 12px; display: block; margin-bottom: 5px;">
+              Confidence Range: <span id="confidence-range-display">-6.15 to -0.34</span>
+            </label>
+            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+              <span style="color: #aaa; font-size: 11px;">Min</span>
+              <input type="range" 
+                     id="confidence-min-slider" 
+                     min="-6.15" 
+                     max="-0.34" 
+                     step="0.01"
+                     value="-6.15" 
+                     style="flex: 1; height: 4px; background: #444; outline: none;">
+              <span style="color: #aaa; font-size: 11px;">Max</span>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
+              <span style="color: #aaa; font-size: 11px;">Min</span>
+              <input type="range" 
+                     id="confidence-max-slider" 
+                     min="-6.15" 
+                     max="-0.34" 
+                     step="0.01"
+                     value="-0.34" 
+                     style="flex: 1; height: 4px; background: #444; outline: none;">
+              <span style="color: #aaa; font-size: 11px;">Max</span>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button onclick="resetConfidenceFilter()" 
+                    style="background: #555; color: white; border: 1px solid #777; padding: 6px 12px; border-radius: 3px; font-size: 11px; cursor: pointer;">
+              Reset
+            </button>
+            <button onclick="toggleSecondPointCloud()" 
+                    style="background: #0066cc; color: white; border: 1px solid #0088ff; padding: 6px 12px; border-radius: 3px; font-size: 11px; cursor: pointer;">
+              <span id="toggle-text">Show Confidence Colors</span>
+            </button>
+          </div>
+        </div>
+      `;
+      sidebarContent.appendChild(confidenceSection);
+      
+      // Add event listeners
+      document.getElementById('confidence-min-slider').addEventListener('input', updateConfidenceFilter);
+      document.getElementById('confidence-max-slider').addEventListener('input', updateConfidenceFilter);
+    }
+  }, 1500);
+  
+  // Override the default toggleSidebar function
   viewer.toggleSidebar = function() {
     const sidebar = document.getElementById('potree_sidebar_container');
     const renderArea = document.getElementById('potree_render_area');
     
     if (sidebar.classList.contains('hidden')) {
-      // Show sidebar
       sidebar.classList.remove('hidden');
       renderArea.style.left = '300px';
       renderArea.style.width = 'calc(100% - 300px)';
     } else {
-      // Hide sidebar
       sidebar.classList.add('hidden');
       renderArea.style.left = '0px';
       renderArea.style.width = '100%';
     }
   };
   
-  // Find and attach the toggle function to the sidebar toggle button
   setTimeout(() => {
     const toggleButton = document.querySelector('#potree_sidebar_container .potree_sidebar_header .potree_sidebar_toggle');
     if (toggleButton) {
       toggleButton.onclick = () => viewer.toggleSidebar();
     }
     
-    // Also look for other toggle buttons that might exist
     const allToggleButtons = document.querySelectorAll('[title="toggle sidebar"]');
     allToggleButtons.forEach(button => {
       button.onclick = () => viewer.toggleSidebar();
@@ -321,19 +382,127 @@ viewer.loadGUI(() => {
   }, 1000);
 });
 
+// Global variables for point clouds
+let rgbPointCloud = null;
+let confidencePointCloud = null;
+let showingConfidenceColors = false;
+
 // Load point cloud using metadata.json format
 let url = "birne_alu_h_with_conf_sub_7/metadata.json";
 Potree.loadPointCloud(url).then(e => {
-  let pointcloud = e.pointcloud;
-  let material = pointcloud.material;
+  // First point cloud - RGB colored
+  rgbPointCloud = e.pointcloud;
+  let material = rgbPointCloud.material;
 
-  material.activeAttributeName = "rgba";
+  material.activeAttributeName = "rgba"; // Use RGB colors
   material.minSize = 2;
   material.pointSizeType = Potree.PointSizeType.ADAPTIVE;
+  
+  // Store confidence range for filtering
+  rgbPointCloud.confidenceRange = [-6.15, -0.34];
 
-  viewer.scene.addPointCloud(pointcloud);
+  viewer.scene.addPointCloud(rgbPointCloud);
   viewer.fitToScreen();
+  
+  console.log("RGB point cloud loaded");
 });
+
+// Global functions for confidence filtering
+window.updateConfidenceFilter = function() {
+  const minSlider = document.getElementById('confidence-min-slider');
+  const maxSlider = document.getElementById('confidence-max-slider');
+  const rangeDisplay = document.getElementById('confidence-range-display');
+  
+  if (minSlider && maxSlider && rangeDisplay) {
+    let minVal = parseFloat(minSlider.value);
+    let maxVal = parseFloat(maxSlider.value);
+    
+    // Ensure min is not greater than max
+    if (minVal > maxVal) {
+      minSlider.value = maxVal;
+      minVal = maxVal;
+    }
+    if (maxVal < minVal) {
+      maxSlider.value = minVal;
+      maxVal = minVal;
+    }
+    
+    rangeDisplay.textContent = `${minVal.toFixed(2)} to ${maxVal.toFixed(2)}`;
+    
+    // Apply filter to both point clouds
+    if (rgbPointCloud && rgbPointCloud.material) {
+      rgbPointCloud.material.elevationRange = [minVal, maxVal];
+      // Use a custom filter for confidence attribute
+      if (rgbPointCloud.material.setFilter) {
+        rgbPointCloud.material.setFilter({
+          attribute: "confidence",
+          range: [minVal, maxVal]
+        });
+      }
+    }
+    
+    if (confidencePointCloud && confidencePointCloud.material) {
+      confidencePointCloud.material.elevationRange = [minVal, maxVal];
+      if (confidencePointCloud.material.setFilter) {
+        confidencePointCloud.material.setFilter({
+          attribute: "confidence", 
+          range: [minVal, maxVal]
+        });
+      }
+    }
+  }
+};
+
+window.resetConfidenceFilter = function() {
+  const minSlider = document.getElementById('confidence-min-slider');
+  const maxSlider = document.getElementById('confidence-max-slider');
+  
+  if (minSlider && maxSlider) {
+    minSlider.value = -6.15;
+    maxSlider.value = -0.34;
+    updateConfidenceFilter();
+  }
+};
+
+window.toggleSecondPointCloud = function() {
+  const toggleText = document.getElementById('toggle-text');
+  
+  if (!showingConfidenceColors) {
+    // Load second point cloud with confidence colors
+    Potree.loadPointCloud(url).then(e => {
+      confidencePointCloud = e.pointcloud;
+      let material = confidencePointCloud.material;
+
+      material.activeAttributeName = "confidence"; // Use confidence for coloring
+      material.minSize = 2;
+      material.pointSizeType = Potree.PointSizeType.ADAPTIVE;
+      material.intensityRange = [-6.15, -0.34]; // Set confidence color range
+      
+      // Position slightly offset so both are visible
+      confidencePointCloud.position.x += 0.1;
+      
+      viewer.scene.addPointCloud(confidencePointCloud);
+      
+      showingConfidenceColors = true;
+      toggleText.textContent = "Hide Confidence Colors";
+      
+      // Apply current filter
+      updateConfidenceFilter();
+      
+      console.log("Confidence-colored point cloud loaded");
+    });
+  } else {
+    // Remove second point cloud
+    if (confidencePointCloud) {
+      viewer.scene.removePointCloud(confidencePointCloud);
+      confidencePointCloud = null;
+      showingConfidenceColors = false;
+      toggleText.textContent = "Show Confidence Colors";
+      
+      console.log("Confidence-colored point cloud removed");
+    }
+  }
+};
 
 </script>
 
