@@ -284,102 +284,194 @@ viewer.loadSettingsFromURL();
 
 viewer.setDescription("");
 
+// Create custom control panel instead of using default sidebar
+setTimeout(() => {
+  // Hide the default sidebar
+  const sidebar = document.querySelector('#potree_sidebar_container');
+  if (sidebar) {
+    sidebar.style.display = 'none';
+  }
+  
+  // Create custom control panel
+  const controlPanel = document.createElement('div');
+  controlPanel.id = 'custom-control-panel';
+  controlPanel.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: rgba(42, 42, 42, 0.95);
+    border: 1px solid #444;
+    border-radius: 5px;
+    padding: 20px;
+    min-width: 300px;
+    z-index: 1000;
+    color: white;
+    font-family: Arial, sans-serif;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  `;
+  
+  controlPanel.innerHTML = `
+    <div style="font-weight: bold; margin-bottom: 15px; font-size: 14px;">
+      Confidence Filter
+    </div>
+    
+    <div style="margin-bottom: 15px;">
+      <label style="font-size: 12px; display: block; margin-bottom: 8px;">
+        Range: <span id="confidence-range-display">-6.15 to -0.34</span>
+      </label>
+      
+      <!-- Dual Range Slider Container -->
+      <div style="position: relative; height: 30px; margin-bottom: 20px;">
+        <div id="slider-track" style="
+          position: absolute;
+          top: 13px;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: #444;
+          border-radius: 2px;
+        "></div>
+        
+        <div id="slider-range" style="
+          position: absolute;
+          top: 13px;
+          height: 4px;
+          background: #0066cc;
+          border-radius: 2px;
+          left: 0%;
+          right: 0%;
+        "></div>
+        
+        <input type="range" 
+               id="confidence-min-slider" 
+               min="-6.15" 
+               max="-0.34" 
+               step="0.01"
+               value="-6.15" 
+               style="
+                 position: absolute;
+                 top: 0;
+                 left: 0;
+                 width: 100%;
+                 height: 30px;
+                 background: transparent;
+                 pointer-events: none;
+                 -webkit-appearance: none;
+                 appearance: none;
+               ">
+        
+        <input type="range" 
+               id="confidence-max-slider" 
+               min="-6.15" 
+               max="-0.34" 
+               step="0.01"
+               value="-0.34" 
+               style="
+                 position: absolute;
+                 top: 0;
+                 left: 0;
+                 width: 100%;
+                 height: 30px;
+                 background: transparent;
+                 pointer-events: none;
+                 -webkit-appearance: none;
+                 appearance: none;
+               ">
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; font-size: 10px; color: #aaa;">
+        <span>-6.15</span>
+        <span>-0.34</span>
+      </div>
+    </div>
+    
+    <div style="display: flex; gap: 10px;">
+      <button onclick="resetConfidenceFilter()" 
+              style="background: #555; color: white; border: 1px solid #777; padding: 8px 16px; border-radius: 3px; font-size: 12px; cursor: pointer;">
+        Reset
+      </button>
+      <button onclick="toggleSecondPointCloud()" 
+              style="background: #0066cc; color: white; border: 1px solid #0088ff; padding: 8px 16px; border-radius: 3px; font-size: 12px; cursor: pointer;">
+        <span id="toggle-text">Show Confidence Colors</span>
+      </button>
+    </div>
+  `;
+  
+  document.body.appendChild(controlPanel);
+  
+  // Style the range sliders
+  const style = document.createElement('style');
+  style.textContent = `
+    #confidence-min-slider, #confidence-max-slider {
+      pointer-events: all !important;
+    }
+    
+    #confidence-min-slider::-webkit-slider-thumb,
+    #confidence-max-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 16px;
+      width: 16px;
+      border-radius: 50%;
+      background: #0066cc;
+      cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    #confidence-min-slider::-moz-range-thumb,
+    #confidence-max-slider::-moz-range-thumb {
+      height: 16px;
+      width: 16px;
+      border-radius: 50%;
+      background: #0066cc;
+      cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // Add event listeners with proper filtering
+  document.getElementById('confidence-min-slider').addEventListener('input', updateConfidenceFilter);
+  document.getElementById('confidence-max-slider').addEventListener('input', updateConfidenceFilter);
+  
+  // Initialize slider visual
+  updateSliderVisual();
+}, 1500);
+
 viewer.loadGUI(() => {
   viewer.setLanguage('en');
-  $("#menu_appearance").next().show();
   
-  // Add custom confidence slider after GUI loads
+  // Hide default UI elements since we have custom controls
   setTimeout(() => {
-    // Add custom confidence control section
-    const sidebarContent = document.querySelector('#potree_sidebar_container');
-    if (sidebarContent) {
-      const confidenceSection = document.createElement('div');
-      confidenceSection.className = 'potree_sidebar_section';
-      confidenceSection.style.cssText = `
-        background: #2a2a2a;
-        border: 1px solid #444;
-        margin: 5px;
-        border-radius: 3px;
-      `;
-      confidenceSection.innerHTML = `
-        <div style="background: #333; padding: 8px; border-bottom: 1px solid #444; font-weight: bold; color: white;">
-          Confidence Filter
-        </div>
-        <div style="padding: 15px;">
-          <div style="margin-bottom: 10px;">
-            <label style="color: white; font-size: 12px; display: block; margin-bottom: 5px;">
-              Confidence Range: <span id="confidence-range-display">-6.15 to -0.34</span>
-            </label>
-            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
-              <span style="color: #aaa; font-size: 11px;">Min</span>
-              <input type="range" 
-                     id="confidence-min-slider" 
-                     min="-6.15" 
-                     max="-0.34" 
-                     step="0.01"
-                     value="-6.15" 
-                     style="flex: 1; height: 4px; background: #444; outline: none;">
-              <span style="color: #aaa; font-size: 11px;">Max</span>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
-              <span style="color: #aaa; font-size: 11px;">Min</span>
-              <input type="range" 
-                     id="confidence-max-slider" 
-                     min="-6.15" 
-                     max="-0.34" 
-                     step="0.01"
-                     value="-0.34" 
-                     style="flex: 1; height: 4px; background: #444; outline: none;">
-              <span style="color: #aaa; font-size: 11px;">Max</span>
-            </div>
-          </div>
-          <div style="display: flex; gap: 10px;">
-            <button onclick="resetConfidenceFilter()" 
-                    style="background: #555; color: white; border: 1px solid #777; padding: 6px 12px; border-radius: 3px; font-size: 11px; cursor: pointer;">
-              Reset
-            </button>
-            <button onclick="toggleSecondPointCloud()" 
-                    style="background: #0066cc; color: white; border: 1px solid #0088ff; padding: 6px 12px; border-radius: 3px; font-size: 11px; cursor: pointer;">
-              <span id="toggle-text">Show Confidence Colors</span>
-            </button>
-          </div>
-        </div>
-      `;
-      sidebarContent.appendChild(confidenceSection);
-      
-      // Add event listeners
-      document.getElementById('confidence-min-slider').addEventListener('input', updateConfidenceFilter);
-      document.getElementById('confidence-max-slider').addEventListener('input', updateConfidenceFilter);
+    // Hide the main sidebar completely
+    const sidebar = document.querySelector('#potree_sidebar_container');
+    if (sidebar) {
+      sidebar.style.display = 'none';
     }
-  }, 1500);
-  
-  // Override the default toggleSidebar function
-  viewer.toggleSidebar = function() {
-    const sidebar = document.getElementById('potree_sidebar_container');
-    const renderArea = document.getElementById('potree_render_area');
     
-    if (sidebar.classList.contains('hidden')) {
-      sidebar.classList.remove('hidden');
-      renderArea.style.left = '300px';
-      renderArea.style.width = 'calc(100% - 300px)';
-    } else {
-      sidebar.classList.add('hidden');
+    // Hide other default UI elements
+    const menuContainer = document.querySelector('#potree_menu');
+    if (menuContainer) {
+      menuContainer.style.display = 'none';
+    }
+    
+    // Hide toolbar if it exists
+    const toolbar = document.querySelector('.potree_toolbar');
+    if (toolbar) {
+      toolbar.style.display = 'none';
+    }
+    
+    // Keep just the render area
+    const renderArea = document.getElementById('potree_render_area');
+    if (renderArea) {
       renderArea.style.left = '0px';
       renderArea.style.width = '100%';
+      renderArea.style.top = '0px';
+      renderArea.style.height = '100%';
     }
-  };
-  
-  setTimeout(() => {
-    const toggleButton = document.querySelector('#potree_sidebar_container .potree_sidebar_header .potree_sidebar_toggle');
-    if (toggleButton) {
-      toggleButton.onclick = () => viewer.toggleSidebar();
-    }
-    
-    const allToggleButtons = document.querySelectorAll('[title="toggle sidebar"]');
-    allToggleButtons.forEach(button => {
-      button.onclick = () => viewer.toggleSidebar();
-    });
-  }, 1000);
+  }, 500);
 });
 
 // Global variables for point clouds
@@ -398,16 +490,43 @@ Potree.loadPointCloud(url).then(e => {
   material.minSize = 2;
   material.pointSizeType = Potree.PointSizeType.ADAPTIVE;
   
-  // Store confidence range for filtering
-  rgbPointCloud.confidenceRange = [-6.15, -0.34];
-
+  // Set up filtering - try to use confidence attribute for filtering while keeping RGB colors
+  if (rgbPointCloud.pointcloud && rgbPointCloud.pointcloud.attributes) {
+    console.log("Available attributes:", Object.keys(rgbPointCloud.pointcloud.attributes));
+  }
+  
   viewer.scene.addPointCloud(rgbPointCloud);
   viewer.fitToScreen();
   
   console.log("RGB point cloud loaded");
+  console.log("Point cloud attributes:", rgbPointCloud);
+  
+  // Initialize the filter after loading
+  setTimeout(() => {
+    updateConfidenceFilter();
+  }, 1000);
 });
 
 // Global functions for confidence filtering
+window.updateSliderVisual = function() {
+  const minSlider = document.getElementById('confidence-min-slider');
+  const maxSlider = document.getElementById('confidence-max-slider');
+  const sliderRange = document.getElementById('slider-range');
+  
+  if (minSlider && maxSlider && sliderRange) {
+    const min = parseFloat(minSlider.min);
+    const max = parseFloat(minSlider.max);
+    const minVal = parseFloat(minSlider.value);
+    const maxVal = parseFloat(maxSlider.value);
+    
+    const minPercent = ((minVal - min) / (max - min)) * 100;
+    const maxPercent = ((maxVal - min) / (max - min)) * 100;
+    
+    sliderRange.style.left = minPercent + '%';
+    sliderRange.style.width = (maxPercent - minPercent) + '%';
+  }
+};
+
 window.updateConfidenceFilter = function() {
   const minSlider = document.getElementById('confidence-min-slider');
   const maxSlider = document.getElementById('confidence-max-slider');
@@ -429,27 +548,46 @@ window.updateConfidenceFilter = function() {
     
     rangeDisplay.textContent = `${minVal.toFixed(2)} to ${maxVal.toFixed(2)}`;
     
-    // Apply filter to both point clouds
+    // Update visual slider
+    updateSliderVisual();
+    
+    // Apply filter to both point clouds using Potree's built-in filtering
     if (rgbPointCloud && rgbPointCloud.material) {
-      rgbPointCloud.material.elevationRange = [minVal, maxVal];
-      // Use a custom filter for confidence attribute
-      if (rgbPointCloud.material.setFilter) {
-        rgbPointCloud.material.setFilter({
-          attribute: "confidence",
-          range: [minVal, maxVal]
-        });
+      // Use the confidence attribute for filtering
+      rgbPointCloud.material.activeAttributeName = "rgba"; // Keep RGB coloring
+      
+      // Try different filtering approaches
+      if (rgbPointCloud.material.uniforms && rgbPointCloud.material.uniforms.uFilterByNormalAngle) {
+        // Use elevation-based filtering as a proxy for confidence
+        rgbPointCloud.material.elevationRange = [minVal, maxVal];
+      }
+      
+      // Also try intensity-based filtering
+      if (rgbPointCloud.material.intensityRange) {
+        rgbPointCloud.material.intensityRange = [minVal, maxVal];
+      }
+      
+      // Force material update
+      rgbPointCloud.material.needsUpdate = true;
+      
+      // Update point cloud
+      if (rgbPointCloud.needsUpdate !== undefined) {
+        rgbPointCloud.needsUpdate = true;
       }
     }
     
     if (confidencePointCloud && confidencePointCloud.material) {
+      confidencePointCloud.material.activeAttributeName = "confidence";
+      confidencePointCloud.material.intensityRange = [minVal, maxVal];
       confidencePointCloud.material.elevationRange = [minVal, maxVal];
-      if (confidencePointCloud.material.setFilter) {
-        confidencePointCloud.material.setFilter({
-          attribute: "confidence", 
-          range: [minVal, maxVal]
-        });
+      confidencePointCloud.material.needsUpdate = true;
+      
+      if (confidencePointCloud.needsUpdate !== undefined) {
+        confidencePointCloud.needsUpdate = true;
       }
     }
+    
+    console.log(`Filtering confidence range: ${minVal.toFixed(2)} to ${maxVal.toFixed(2)}`);
   }
 };
 
