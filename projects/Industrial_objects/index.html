@@ -293,25 +293,25 @@ let globalPointcloud = null;
 window.updateConfidenceFilter = function() {
   if (!globalPointcloud) return;
   
-  console.log('Switching to confidence visualization via elevation attribute');
+  console.log('Switching to confidence visualization');
   
   const material = globalPointcloud.material;
   
-  // Switch to elevation attribute (which now contains confidence data)
-  material.activeAttributeName = "elevation";
+  // Switch to confidence attribute (where the actual data is)
+  material.activeAttributeName = "confidence";
+  
+  // Remove any gradient for now - let's see the raw confidence values first
+  material.gradient = null;
   
   // Set the proper range for confidence values (from your metadata.json)  
   const minConf = -6.1442599296569824;
   const maxConf = -0.34519290924072266;
   
-  // Set elevation range to match your confidence data exactly
-  material.elevationRange = [minConf, maxConf];
+  // Use intensityRange to map confidence values to colors
+  material.intensityRange = [minConf, maxConf];
   
-  // Try SPECTRAL gradient for better rainbow colors (blue->green->yellow->red)
-  material.gradient = Potree.Gradients.SPECTRAL;
-  
-  console.log('Set elevation range to confidence range:', minConf, 'to', maxConf);
-  console.log('Applied SPECTRAL gradient (should show blue=low confidence, red=high confidence)');
+  console.log('Switched to confidence attribute without gradient');
+  console.log('Confidence range:', minConf, 'to', maxConf);
   
   // Force update
   viewer.setScene(viewer.scene);
@@ -344,13 +344,13 @@ window.setGradient = function(gradientName) {
   
   const material = globalPointcloud.material;
   
-  // Make sure we're in elevation mode
-  material.activeAttributeName = "elevation";
+  // Make sure we're in confidence mode
+  material.activeAttributeName = "confidence";
   
   // Set the confidence range
   const minConf = -6.1442599296569824;
   const maxConf = -0.34519290924072266;
-  material.elevationRange = [minConf, maxConf];
+  material.intensityRange = [minConf, maxConf];
   
   // Apply the selected gradient
   material.gradient = Potree.Gradients[gradientName];

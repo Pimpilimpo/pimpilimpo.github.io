@@ -119,7 +119,7 @@
 			"scale": [1, 1, 1],
 			"offset": [0, 0, 0]
 		},{
-			"name": "elevation",
+			"name": "confidence",
 			"description": "",
 			"size": 4,
 			"numElements": 1,
