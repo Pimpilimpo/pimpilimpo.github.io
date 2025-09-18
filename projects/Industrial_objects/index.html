@@ -289,7 +289,8 @@ viewer.setDescription("");
 // Global variables and functions for confidence filtering
 let globalPointcloud = null;
 
-function updateConfidenceFilter() {
+// Make functions available in global scope (window object)
+window.updateConfidenceFilter = function() {
   if (!globalPointcloud) return;
   
   const slider = document.getElementById('confidence-slider');
@@ -298,43 +299,23 @@ function updateConfidenceFilter() {
   
   valueDisplay.textContent = threshold.toFixed(2);
   
-  // Debug output
-  console.log('Confidence filter called with threshold:', threshold);
+  console.log('Switching to confidence visualization');
   
   const material = globalPointcloud.material;
   
-  // Use actual confidence values from the point cloud
-  // Confidence range is approximately -6.14 to -0.35 (log confidence)
-  const minConf = -6.1442599296569824;
-  const maxConf = -0.34519290924072266;
-  const confidenceThreshold = minConf + threshold * (maxConf - minConf);
-  
-  console.log('Mapped confidence threshold:', confidenceThreshold);
-  
-  // Use confidence attribute for visualization and filtering
+  // Switch to confidence attribute
   material.activeAttributeName = "confidence";
   
-  // Create a custom gradient that makes low-confidence points transparent
-  const gradient = [
-    [0.0, new THREE.Color(0.0, 0.0, 0.0), 0.0], // Fully transparent at minimum
-    [threshold - 0.01, new THREE.Color(0.0, 0.0, 0.0), 0.0], // Transparent below threshold
-    [threshold, new THREE.Color(1.0, 0.8, 0.0), 1.0], // Yellow at threshold
-    [1.0, new THREE.Color(0.0, 1.0, 0.0), 1.0] // Green at maximum confidence
-  ];
-  
-  // Apply the gradient
-  material.gradient = gradient;
-  material.useGradient = true;
-  
-  // Set the attribute range to match our confidence values
-  material.intensityRange = [minConf, maxConf];
+  // Apply a gradient colormap for confidence visualization (like in toolbar.html)
+  // Using a blue to red gradient where blue = low confidence, red = high confidence
+  material.gradient = Potree.Gradients.SPECTRAL;
   
   // Force update
   viewer.setScene(viewer.scene);
-  console.log('Scene updated with confidence filtering');
+  console.log('Switched to confidence visualization with colormap');
 }
 
-function resetConfidenceFilter() {
+window.resetConfidenceFilter = function() {
   if (!globalPointcloud) return;
   
   const slider = document.getElementById('confidence-slider');
@@ -343,20 +324,17 @@ function resetConfidenceFilter() {
   slider.value = 0.0;
   valueDisplay.textContent = '0.00';
   
-  console.log('Confidence filter reset');
+  console.log('Switching back to RGB colors');
   
   const material = globalPointcloud.material;
   
-  // Reset to show all points with original colors
+  // Switch back to RGB colors (like in toolbar.html example)
   material.activeAttributeName = "rgba";
-  material.gradient = null;
-  material.useGradient = false;
-  
-  // Reset intensity range to default
-  material.intensityRange = [0, 65535];
+  material.gradient = null; // Remove gradient
   
   // Force update
   viewer.setScene(viewer.scene);
+  console.log('Switched back to RGB colors');
 }
 
 // Make functions available globally
@@ -374,37 +352,26 @@ viewer.loadGUI(() => {
   
   // Add custom confidence slider section using Potree's accordion system (like test2.html)
   let section = $(`
-    <h3 id="menu_confidence" class="accordion-header ui-widget"><span>Confidence Filter</span></h3>
+    <h3 id="menu_confidence" class="accordion-header ui-widget"><span>Material Visualization</span></h3>
     <div class="accordion-content ui-widget pv-menu-list"></div>
   `);
   let content = section.last();
   content.html(`
     <div class="pv-menu-list">
       <div style="padding: 10px;">
-        <label style="display: block; margin-bottom: 10px; color: #ddd;">
-          Confidence Threshold: <span id="confidence-value">0.5</span>
-        </label>
-        <input type="range" 
-               id="confidence-slider" 
-               min="0" 
-               max="1" 
-               step="0.01"
-               value="0.5" 
-               style="width: 100%; margin-bottom: 10px;"
-               oninput="updateConfidenceFilter()">
-        <div style="display: flex; justify-content: space-between; font-size: 11px; color: #aaa;">
-          <span>Low Confidence</span>
-          <span>High Confidence</span>
-        </div>
-        <div style="margin-top: 15px;">
+        <div style="margin-bottom: 15px;">
           <button onclick="resetConfidenceFilter()" 
-                  style="width: 100%; background: #444; color: white; border: 1px solid #666; padding: 8px; border-radius: 3px; cursor: pointer;">
-            Reset Filter
+                  style="width: 48%; background: #444; color: white; border: 1px solid #666; padding: 8px; border-radius: 3px; cursor: pointer; margin-right: 4%;">
+            RGB Colors
+          </button>
+          <button onclick="updateConfidenceFilter()" 
+                  style="width: 48%; background: #444; color: white; border: 1px solid #666; padding: 8px; border-radius: 3px; cursor: pointer;">
+            Confidence Map
           </button>
         </div>
         <div style="margin-top: 10px; font-size: 11px; color: #999; line-height: 1.3;">
-          Note: This filter works with intensity values as a proxy for confidence. 
-          Adjust the slider to show/hide points based on their intensity values.
+          <strong>RGB Colors:</strong> Shows original point cloud colors<br>
+          <strong>Confidence Map:</strong> Shows confidence values as a color gradient (blue = low, red = high)
         </div>
       </div>
     </div>
