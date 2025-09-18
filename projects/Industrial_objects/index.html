@@ -300,13 +300,20 @@ window.updateConfidenceFilter = function() {
   // Switch to confidence attribute
   material.activeAttributeName = "confidence";
   
+  // Set the proper range for confidence values (from your metadata.json)
+  const minConf = -6.1442599296569824;
+  const maxConf = -0.34519290924072266;
+  
+  // Use intensityRange to properly map the confidence values
+  material.intensityRange = [minConf, maxConf];
+  
   // Apply a gradient colormap for confidence visualization (like in toolbar.html)
   // Using a spectral gradient where blue = low confidence, red = high confidence
   material.gradient = Potree.Gradients.SPECTRAL;
   
   // Force update
   viewer.setScene(viewer.scene);
-  console.log('Switched to confidence visualization with colormap');
+  console.log('Switched to confidence visualization with colormap, range:', minConf, 'to', maxConf);
 }
 
 window.resetConfidenceFilter = function() {
@@ -319,6 +326,9 @@ window.resetConfidenceFilter = function() {
   // Switch back to RGB colors (like in toolbar.html example)
   material.activeAttributeName = "rgba";
   material.gradient = null; // Remove gradient
+  
+  // Reset intensity range to default (for RGB this doesn't matter much)
+  material.intensityRange = [0, 65535];
   
   // Force update
   viewer.setScene(viewer.scene);
