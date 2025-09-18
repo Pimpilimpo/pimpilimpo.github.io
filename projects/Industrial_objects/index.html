@@ -196,7 +196,13 @@
 </footer>
 
 
-<!-- POTREE JS (make sure potree/ points to the Potree build in your repo) -->
+<!-- Load dependencies first -->
+<script src="Potree_1.8.2/libs/jquery/jquery-3.1.1.min.js"></script>
+<script src="Potree_1.8.2/libs/proj4/proj4.js"></script>
+<script src="Potree_1.8.2/libs/three.js/build/three.min.js"></script>
+<script src="Potree_1.8.2/libs/plasio/js/laslaz.js"></script>
+
+<!-- Then load Potree -->
 <script src="Potree_1.8.2/build/potree/potree.js"></script>
 
 <script>
@@ -216,23 +222,9 @@
     // Replace this with your actual Hugging Face metadata.json URL
     const metadataUrl = 'pointcloud_test/metadata.json';
 
-    (async () => {
-      try {
-        const res = await Potree.loadPointCloud(metadataUrl, 'mycloud');
-        // Different potree builds return either {pointcloud: ...} or the pointcloud directly
-        const pointcloud = res.pointcloud ? res.pointcloud : res;
-
-        // optional material tweaks (edit as needed)
-        pointcloud.material.activeAttributeName = 'rgba';
-        pointcloud.material.pointSizeType = Potree.PointSizeType.ADAPTIVE;
-
-        viewer.scene.addPointCloud(pointcloud);
-        viewer.fitToScreen();
-      } catch (err) {
-        console.error('Failed to load pointcloud:', err);
-        alert('Failed to load point cloud — see console for details.');
-      }
-    })();
+    viewer.loadPointCloud("pointcloud_test/metadata.json", "MyPointCloud", e => {
+      viewer.scene.view.setView([0,0,0], 100); // Adjust as needed
+    });
   });
 </script>
 
