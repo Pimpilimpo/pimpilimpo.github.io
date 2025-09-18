@@ -297,23 +297,35 @@ window.updateConfidenceFilter = function() {
   
   const material = globalPointcloud.material;
   
-  // Switch to confidence attribute
+  // Switch to confidence attribute (this should work)
   material.activeAttributeName = "confidence";
   
-  // Set the proper range for confidence values (from your metadata.json)
+  // Set the proper range for confidence values (from your metadata.json)  
   const minConf = -6.1442599296569824;
   const maxConf = -0.34519290924072266;
   
-  // Use intensityRange to properly map the confidence values
-  material.intensityRange = [minConf, maxConf];
+  // Try different approaches to get gradient working
+  console.log('Available gradients:', Object.keys(Potree.Gradients));
   
-  // Apply a gradient colormap for confidence visualization (like in toolbar.html)
-  // Using a spectral gradient where blue = low confidence, red = high confidence
-  material.gradient = Potree.Gradients.SPECTRAL;
+  // Method 1: Use a simpler gradient
+  material.gradient = Potree.Gradients.RAINBOW;
+  
+  // Method 2: Also set proper ranges for the attribute
+  if (material.elevationRange !== undefined) {
+    material.elevationRange = [minConf, maxConf];
+  }
+  if (material.intensityRange !== undefined) {
+    material.intensityRange = [minConf, maxConf];
+  }
+  
+  // Method 3: Debug what attribute is actually selected
+  console.log('Active attribute:', material.activeAttributeName);
+  console.log('Material gradient:', material.gradient);
+  console.log('Available material properties:', Object.keys(material));
   
   // Force update
   viewer.setScene(viewer.scene);
-  console.log('Switched to confidence visualization with colormap, range:', minConf, 'to', maxConf);
+  console.log('Applied RAINBOW gradient to confidence attribute');
 }
 
 window.resetConfidenceFilter = function() {
