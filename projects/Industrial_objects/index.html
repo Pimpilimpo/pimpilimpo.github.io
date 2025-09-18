@@ -293,12 +293,6 @@ let globalPointcloud = null;
 window.updateConfidenceFilter = function() {
   if (!globalPointcloud) return;
   
-  const slider = document.getElementById('confidence-slider');
-  const valueDisplay = document.getElementById('confidence-value');
-  const threshold = parseFloat(slider.value);
-  
-  valueDisplay.textContent = threshold.toFixed(2);
-  
   console.log('Switching to confidence visualization');
   
   const material = globalPointcloud.material;
@@ -307,7 +301,7 @@ window.updateConfidenceFilter = function() {
   material.activeAttributeName = "confidence";
   
   // Apply a gradient colormap for confidence visualization (like in toolbar.html)
-  // Using a blue to red gradient where blue = low confidence, red = high confidence
+  // Using a spectral gradient where blue = low confidence, red = high confidence
   material.gradient = Potree.Gradients.SPECTRAL;
   
   // Force update
@@ -317,12 +311,6 @@ window.updateConfidenceFilter = function() {
 
 window.resetConfidenceFilter = function() {
   if (!globalPointcloud) return;
-  
-  const slider = document.getElementById('confidence-slider');
-  const valueDisplay = document.getElementById('confidence-value');
-  
-  slider.value = 0.0;
-  valueDisplay.textContent = '0.00';
   
   console.log('Switching back to RGB colors');
   
