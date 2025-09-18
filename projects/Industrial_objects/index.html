@@ -293,38 +293,26 @@ let globalPointcloud = null;
 window.updateConfidenceFilter = function() {
   if (!globalPointcloud) return;
   
-  console.log('Switching to confidence visualization');
+  console.log('Switching to confidence visualization via elevation attribute');
   
   const material = globalPointcloud.material;
   
-  // Switch to confidence attribute
-  material.activeAttributeName = "confidence";
+  // Switch to elevation attribute (which now contains confidence data)
+  material.activeAttributeName = "elevation";
   
   // Set the proper range for confidence values (from your metadata.json)  
   const minConf = -6.1442599296569824;
   const maxConf = -0.34519290924072266;
   
-  // Apply gradient
+  // Set elevation range (this should work perfectly now)
+  material.elevationRange = [minConf, maxConf];
+  
+  // Apply gradient (this should work with elevation)
   material.gradient = Potree.Gradients.RAINBOW;
-  
-  // The key fix: Set the range using the ranges property
-  if (material.ranges) {
-    console.log('Setting confidence range using material.ranges');
-    // Try to set the range for the confidence attribute specifically
-    material.ranges.confidence = [minConf, maxConf];
-    console.log('Set confidence range to:', material.ranges.confidence);
-  }
-  
-  // Also try setting it as a generic range (backup method)
-  material.intensityRange = [minConf, maxConf];
-  
-  // Debug the ranges object
-  console.log('Material ranges object:', material.ranges);
-  console.log('Confidence range in metadata:', minConf, 'to', maxConf);
   
   // Force update
   viewer.setScene(viewer.scene);
-  console.log('Applied RAINBOW gradient to confidence attribute with proper range');
+  console.log('Applied RAINBOW gradient to elevation attribute (confidence data)');
 }
 
 window.resetConfidenceFilter = function() {
