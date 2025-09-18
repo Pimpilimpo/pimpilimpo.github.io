@@ -399,9 +399,13 @@ viewer.loadGUI(() => {
 
 // Load point cloud using metadata.json format
 let url = "birne_alu_h_with_conf_sub_7/metadata.json";
+let globalPointcloud = null; // Store reference for filtering
+
 Potree.loadPointCloud(url).then(e => {
   let pointcloud = e.pointcloud;
   let material = pointcloud.material;
+  
+  globalPointcloud = pointcloud; // Store global reference
 
   material.activeAttributeName = "rgba";
   material.minSize = 2;
@@ -410,6 +414,50 @@ Potree.loadPointCloud(url).then(e => {
   viewer.scene.addPointCloud(pointcloud);
   viewer.fitToScreen();
 });
+
+// Confidence filter functions
+function updateConfidenceFilter() {
+  if (!globalPointcloud) return;
+  
+  const slider = document.getElementById('confidence-slider');
+  const valueDisplay = document.getElementById('confidence-value');
+  const threshold = parseFloat(slider.value);
+  
+  valueDisplay.textContent = threshold.toFixed(2);
+  
+  const material = globalPointcloud.material;
+  
+  // Use intensity filtering as a proxy for confidence
+  // Intensity values are typically 0-65535, normalize to 0-1
+  const intensityThreshold = threshold * 65535;
+  
+  // Set intensity range based on threshold
+  material.intensityRange = [intensityThreshold, 65535];
+  material.intensityGamma = 1.0;
+  material.activeAttributeName = "intensity";
+  
+  // Force update
+  viewer.setScene(viewer.scene);
+}
+
+function resetConfidenceFilter() {
+  if (!globalPointcloud) return;
+  
+  const slider = document.getElementById('confidence-slider');
+  const valueDisplay = document.getElementById('confidence-value');
+  
+  slider.value = 0.0;
+  valueDisplay.textContent = '0.00';
+  
+  const material = globalPointcloud.material;
+  
+  // Reset to show all points
+  material.intensityRange = [0, 65535];
+  material.activeAttributeName = "rgba"; // Switch back to color display
+  
+  // Force update
+  viewer.setScene(viewer.scene);
+}
 
 </script>
 
