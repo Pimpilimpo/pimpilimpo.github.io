@@ -8,8 +8,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Industrial Object Dataset</title>
 
-
-
   <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
         rel="stylesheet">
 
@@ -21,6 +19,26 @@
         href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
   <link rel="stylesheet" href="./static/css/index.css">
   <link rel="icon" href="./static/images/favicon.svg">
+
+  <!-- POTREE CSS (make sure you copied Potree's build/ folder to potree/ in your repo) -->
+  <link rel="stylesheet" href="potree/build/potree/potree.css">
+
+  <style>
+    html, body { height: 100%; }
+    /* small tweak so potree viewer sits nicely centered in the page */
+    #potree_wrapper { display:flex; justify-content:center; }
+    #potree_render_area {
+      width: 100%;
+      max-width: 960px;      /* change to your preferred width */
+      height: 600px;        /* change height as you like */
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    }
+
+    /* make Potree controls sit on top so they don't push layout */
+    .potree-container { width:100%; height:100%; }
+  </style>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script defer src="./static/js/fontawesome.all.min.js"></script>
@@ -72,7 +90,7 @@
 
           <div class="is-size-5 publication-authors">
             <span class="author-block"><sup>1</sup>Karlsruhe Institute of Technology,</span>
-            
+
           </div>
 
           <div class="column has-text-centered">
@@ -111,12 +129,20 @@
             </div>
 
           </div>
+
+          <!-- ===== POTREE VIEWER (centered) ===== -->
+          <div id="potree_wrapper" style="margin-top: 1.5rem;">
+            <div id="potree_render_area" class="box">
+              <!-- Potree will render into this div -->
+            </div>
+          </div>
+          <!-- ===== end viewer ===== -->
+
         </div>
       </div>
     </div>
   </div>
 </section>
-
 
 
 
@@ -136,8 +162,6 @@
       </div>
     </div>
     <!--/ Abstract. -->
-
-
 
 
 
@@ -170,6 +194,47 @@
     </div>
   </div>
 </footer>
+
+
+<!-- POTREE JS (make sure potree/ points to the Potree build in your repo) -->
+<script src="potree/build/potree/potree.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Create Potree viewer bound to the render div
+    if (typeof Potree === 'undefined') {
+      console.error('Potree JS not found. Make sure potree/build/potree/potree.js is present in the repo.');
+      return;
+    }
+
+    window.viewer = new Potree.Viewer(document.getElementById('potree_render_area'));
+    viewer.setEDLEnabled(true);
+    viewer.setFOV(60);
+    viewer.setPointBudget(1_000_000);
+    viewer.setBackground("black");
+
+    // Replace this with your actual Hugging Face metadata.json URL
+    const metadataUrl = 'https://huggingface.co/datasets/pimpilim/Industrial-objects/blob/main/birne_alu_h_with_conf.las_converted/metadata.json';
+
+    (async () => {
+      try {
+        const res = await Potree.loadPointCloud(metadataUrl, 'mycloud');
+        // Different potree builds return either {pointcloud: ...} or the pointcloud directly
+        const pointcloud = res.pointcloud ? res.pointcloud : res;
+
+        // optional material tweaks (edit as needed)
+        pointcloud.material.activeAttributeName = 'rgba';
+        pointcloud.material.pointSizeType = Potree.PointSizeType.ADAPTIVE;
+
+        viewer.scene.addPointCloud(pointcloud);
+        viewer.fitToScreen();
+      } catch (err) {
+        console.error('Failed to load pointcloud:', err);
+        alert('Failed to load point cloud — see console for details.');
+      }
+    })();
+  });
+</script>
 
 </body>
 </html>
