@@ -297,35 +297,34 @@ window.updateConfidenceFilter = function() {
   
   const material = globalPointcloud.material;
   
-  // Switch to confidence attribute (this should work)
+  // Switch to confidence attribute
   material.activeAttributeName = "confidence";
   
   // Set the proper range for confidence values (from your metadata.json)  
   const minConf = -6.1442599296569824;
   const maxConf = -0.34519290924072266;
   
-  // Try different approaches to get gradient working
-  console.log('Available gradients:', Object.keys(Potree.Gradients));
-  
-  // Method 1: Use a simpler gradient
+  // Apply gradient
   material.gradient = Potree.Gradients.RAINBOW;
   
-  // Method 2: Also set proper ranges for the attribute
-  if (material.elevationRange !== undefined) {
-    material.elevationRange = [minConf, maxConf];
-  }
-  if (material.intensityRange !== undefined) {
-    material.intensityRange = [minConf, maxConf];
+  // The key fix: Set the range using the ranges property
+  if (material.ranges) {
+    console.log('Setting confidence range using material.ranges');
+    // Try to set the range for the confidence attribute specifically
+    material.ranges.confidence = [minConf, maxConf];
+    console.log('Set confidence range to:', material.ranges.confidence);
   }
   
-  // Method 3: Debug what attribute is actually selected
-  console.log('Active attribute:', material.activeAttributeName);
-  console.log('Material gradient:', material.gradient);
-  console.log('Available material properties:', Object.keys(material));
+  // Also try setting it as a generic range (backup method)
+  material.intensityRange = [minConf, maxConf];
+  
+  // Debug the ranges object
+  console.log('Material ranges object:', material.ranges);
+  console.log('Confidence range in metadata:', minConf, 'to', maxConf);
   
   // Force update
   viewer.setScene(viewer.scene);
-  console.log('Applied RAINBOW gradient to confidence attribute');
+  console.log('Applied RAINBOW gradient to confidence attribute with proper range');
 }
 
 window.resetConfidenceFilter = function() {
