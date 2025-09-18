@@ -47,6 +47,7 @@
       overflow: hidden;
       box-shadow: 0 8px 30px rgba(0,0,0,0.25);
       pointer-events: auto; /* Allow pointer events only within container */
+      z-index: 10; /* Ensure container stays above other content */
     }
     
     #potree_render_area {
@@ -57,6 +58,7 @@
       height: 100% !important;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       pointer-events: auto; /* Ensure render area gets mouse events */
+      z-index: 11; /* Render area above container */
     }
     
     #potree_sidebar_container {
@@ -296,21 +298,26 @@ function updateConfidenceFilter() {
   
   valueDisplay.textContent = threshold.toFixed(2);
   
+  // Debug output
+  console.log('Confidence filter called with threshold:', threshold);
+  
   const material = globalPointcloud.material;
   
   // Use actual confidence values from the point cloud
   // Confidence range is approximately -6.14 to -0.35 (log confidence)
-  // Map slider value (0-1) to confidence range (-6.14 to -0.35)
   const minConf = -6.1442599296569824;
   const maxConf = -0.34519290924072266;
   const confidenceThreshold = minConf + threshold * (maxConf - minConf);
   
-  // Set confidence filtering
+  console.log('Mapped confidence threshold:', confidenceThreshold);
+  
+  // Switch to confidence attribute and use classification filtering as workaround
   material.activeAttributeName = "confidence";
-  material.confidenceRange = [confidenceThreshold, maxConf];
+  material.elevationRange = [confidenceThreshold, maxConf];
   
   // Force update
   viewer.setScene(viewer.scene);
+  console.log('Scene updated');
 }
 
 function resetConfidenceFilter() {
@@ -322,19 +329,21 @@ function resetConfidenceFilter() {
   slider.value = 0.0;
   valueDisplay.textContent = '0.00';
   
+  console.log('Confidence filter reset');
+  
   const material = globalPointcloud.material;
   
   // Reset to show all points with original colors
   material.activeAttributeName = "rgba";
-  
-  // Reset confidence range to full range
-  const minConf = -6.1442599296569824;
-  const maxConf = -0.34519290924072266;
-  material.confidenceRange = [minConf, maxConf];
+  material.elevationRange = null; // Remove filtering
   
   // Force update
   viewer.setScene(viewer.scene);
 }
+
+// Make functions available globally
+window.updateConfidenceFilter = updateConfidenceFilter;
+window.resetConfidenceFilter = resetConfidenceFilter;
 
 viewer.loadGUI(() => {
   viewer.setLanguage('en');
