@@ -311,13 +311,27 @@ function updateConfidenceFilter() {
   
   console.log('Mapped confidence threshold:', confidenceThreshold);
   
-  // Switch to confidence attribute and use classification filtering as workaround
+  // Use confidence attribute for visualization and filtering
   material.activeAttributeName = "confidence";
-  material.elevationRange = [confidenceThreshold, maxConf];
+  
+  // Create a custom gradient that makes low-confidence points transparent
+  const gradient = [
+    [0.0, new THREE.Color(0.0, 0.0, 0.0), 0.0], // Fully transparent at minimum
+    [threshold - 0.01, new THREE.Color(0.0, 0.0, 0.0), 0.0], // Transparent below threshold
+    [threshold, new THREE.Color(1.0, 0.8, 0.0), 1.0], // Yellow at threshold
+    [1.0, new THREE.Color(0.0, 1.0, 0.0), 1.0] // Green at maximum confidence
+  ];
+  
+  // Apply the gradient
+  material.gradient = gradient;
+  material.useGradient = true;
+  
+  // Set the attribute range to match our confidence values
+  material.intensityRange = [minConf, maxConf];
   
   // Force update
   viewer.setScene(viewer.scene);
-  console.log('Scene updated');
+  console.log('Scene updated with confidence filtering');
 }
 
 function resetConfidenceFilter() {
@@ -335,7 +349,11 @@ function resetConfidenceFilter() {
   
   // Reset to show all points with original colors
   material.activeAttributeName = "rgba";
-  material.elevationRange = null; // Remove filtering
+  material.gradient = null;
+  material.useGradient = false;
+  
+  // Reset intensity range to default
+  material.intensityRange = [0, 65535];
   
   // Force update
   viewer.setScene(viewer.scene);
