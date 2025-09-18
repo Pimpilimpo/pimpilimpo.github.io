@@ -39,16 +39,15 @@
       border-radius: 8px;
       overflow: hidden;
       box-shadow: 0 8px 30px rgba(0,0,0,0.25);
-      position: relative;
+      position: relative; /* Add this */
     }
     
     #potree_render_area {
-      width: 100% !important;
-      height: 100% !important;
-      position: absolute;
+      width: 100%;
+      height: 100%;
+      position: absolute; /* Make render area fill entire container */
       top: 0;
       left: 0;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
     
     #potree_sidebar_container {
@@ -56,15 +55,7 @@
       top: 0;
       right: 0;
       z-index: 1000;
-      width: 300px;
-      height: 100%;
-      pointer-events: auto;
-    }
-    
-    /* Ensure potree canvas fills the render area */
-    #potree_render_area canvas {
-      width: 100% !important;
-      height: 100% !important;
+      width: 300px; /* Set explicit width for sidebar */
     }
   </style>
 
@@ -161,7 +152,7 @@
           <!-- ===== POTREE VIEWER (centered) ===== -->
           <div id="potree_wrapper" style="margin-top: 1.5rem;">
             <div class="potree_container" style="position: relative; width: 100%; max-width: 960px; height: 600px; margin: 0 auto;">
-              <div id="potree_render_area"></div>
+              <div id="potree_render_area" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 100%; height: 100%;"></div>
               <div id="potree_sidebar_container"></div>
             </div>
           </div>
@@ -249,10 +240,6 @@
     }
 
     window.viewer = new Potree.Viewer(document.getElementById('potree_render_area'));
-    
-    // Force the viewer to use the full container size
-    viewer.setSize(960, 600);
-    
     viewer.setEDLEnabled(true);
     viewer.setFOV(60);
     viewer.setPointBudget(1_000_000);
@@ -263,83 +250,20 @@
     viewer.loadGUI(() => {
       viewer.setLanguage('en');
       $("#menu_appearance").next().show();
-      
-      // Force resize after GUI is loaded
-      setTimeout(() => {
-        viewer.setSize(960, 600);
-        viewer.renderer.setSize(960, 600);
-      }, 100);
     });
 
-    // Load test point cloud with full path and error handling
-    let url = "./pointcloud_test/metadata.json";
-    console.log("Attempting to load point cloud from:", url);
-    
+    // Load test point cloud (new metadata.json format with Promise syntax)
+    let url = "birne_alu_h_with_conf_sub_9/metadata.json";
     Potree.loadPointCloud(url).then(e => {
-      console.log("Point cloud loaded successfully:", e);
       let pointcloud = e.pointcloud;
       let material = pointcloud.material;
 
       material.activeAttributeName = "rgba";
       material.minSize = 2;
       material.pointSizeType = Potree.PointSizeType.ADAPTIVE;
-      material.size = 3; // Make points bigger to ensure visibility
 
       viewer.scene.addPointCloud(pointcloud);
-      
-      // Better camera positioning
-      let box = pointcloud.boundingBox;
-      let size = box.getSize(new THREE.Vector3());
-      let center = box.getCenter(new THREE.Vector3());
-      
-      console.log("Point cloud bounds:", box);
-      console.log("Point cloud size:", size);
-      console.log("Point cloud center:", center);
-      
-      // Position camera to view the point cloud
-      let distance = Math.max(size.x, size.y, size.z) * 2;
-      viewer.scene.getActiveCamera().position.copy(center);
-      viewer.scene.getActiveCamera().position.add(new THREE.Vector3(distance, distance, distance));
-      viewer.scene.getActiveCamera().lookAt(center);
-      
       viewer.fitToScreen();
-      
-      console.log("Point cloud added to scene and fitted to screen");
-      
-      // Force another resize to ensure canvas is properly sized
-      setTimeout(() => {
-        viewer.setSize(960, 600);
-        viewer.renderer.setSize(960, 600);
-      }, 500);
-      
-    }).catch(error => {
-      console.error("Failed to load point cloud:", error);
-      
-      // As a fallback, try the lion point cloud with old format
-      console.log("Attempting to load lion point cloud as fallback...");
-      Potree.loadPointCloud("lion_takanawa/cloud.js", "lion", function(e){
-        if (e && e.pointcloud) {
-          viewer.scene.addPointCloud(e.pointcloud);
-          
-          let material = e.pointcloud.material;
-          material.size = 3;
-          material.pointSizeType = Potree.PointSizeType.ADAPTIVE;
-          
-          viewer.fitToScreen();
-          console.log("Fallback lion point cloud loaded successfully");
-          
-          // Force resize for fallback too
-          setTimeout(() => {
-            viewer.setSize(960, 600);
-            viewer.renderer.setSize(960, 600);
-          }, 500);
-        }
-      });
-    });
-    
-    // Handle window resize
-    window.addEventListener('resize', () => {
-      viewer.setSize(960, 600);
     });
   });
 </script>
