@@ -298,14 +298,16 @@ function updateConfidenceFilter() {
   
   const material = globalPointcloud.material;
   
-  // Use intensity filtering as a proxy for confidence
-  // Intensity values are typically 0-65535, normalize to 0-1
-  const intensityThreshold = threshold * 65535;
+  // Use actual confidence values from the point cloud
+  // Confidence range is approximately -6.14 to -0.35 (log confidence)
+  // Map slider value (0-1) to confidence range (-6.14 to -0.35)
+  const minConf = -6.1442599296569824;
+  const maxConf = -0.34519290924072266;
+  const confidenceThreshold = minConf + threshold * (maxConf - minConf);
   
-  // Set intensity range based on threshold
-  material.intensityRange = [intensityThreshold, 65535];
-  material.intensityGamma = 1.0;
-  material.activeAttributeName = "intensity";
+  // Set confidence filtering
+  material.activeAttributeName = "confidence";
+  material.confidenceRange = [confidenceThreshold, maxConf];
   
   // Force update
   viewer.setScene(viewer.scene);
@@ -322,9 +324,13 @@ function resetConfidenceFilter() {
   
   const material = globalPointcloud.material;
   
-  // Reset to show all points
-  material.intensityRange = [0, 65535];
-  material.activeAttributeName = "rgba"; // Switch back to color display
+  // Reset to show all points with original colors
+  material.activeAttributeName = "rgba";
+  
+  // Reset confidence range to full range
+  const minConf = -6.1442599296569824;
+  const maxConf = -0.34519290924072266;
+  material.confidenceRange = [minConf, maxConf];
   
   // Force update
   viewer.setScene(viewer.scene);
