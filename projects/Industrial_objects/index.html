@@ -111,6 +111,42 @@
       margin: 5px 10px;
       width: 1px;
     }
+
+    /* About panel styling */
+    #about_panel {
+      position: absolute;
+      top: 60px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      max-width: 400px;
+      font-family: "system-ui";
+      font-size: 12px;
+      line-height: 1.4;
+      z-index: 10001;
+      display: none;
+    }
+
+    #about_panel h3 {
+      margin: 0 0 10px 0;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    #about_panel p {
+      margin: 8px 0;
+    }
+
+    #about_panel a {
+      color: #4a9eff;
+      text-decoration: none;
+    }
+
+    #about_panel a:hover {
+      text-decoration: underline;
+    }
   </style>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -340,8 +376,7 @@ elToolbar.html(`
       Material
     </div>
     <div>
-      <img name="action_rgb" src="Potree_1.8.2/build/potree/resources/icons/rgb.svg" class="annotation-action-icon" style="width: 2em; height: auto; cursor: pointer; margin: 2px;"/>
-      <img name="action_intensity" src="Potree_1.8.2/build/potree/resources/icons/profile.svg" class="annotation-action-icon" style="width: 2em; height: auto; cursor: pointer; margin: 2px;"/>
+      <select id="optMaterial" name="optMaterial"></select>
     </div>
   </span>
 
@@ -355,26 +390,68 @@ elToolbar.html(`
       <span name="gradient_schemes"></span>
     </div>
   </span>
+
+  <span class="potree_toolbar_separator" />
+
+  <span>
+    <div class="potree_toolbar_label">
+      About
+    </div>
+    <div>
+      <button name="action_about" style="background: #333; color: white; border: 1px solid #666; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px;">About</button>
+    </div>
+  </span>
+`);
+
+// Add about panel HTML
+$("#potree_render_area").append(`
+  <div id="about_panel">
+    <h3>Industrial Object Dataset - Point Cloud Viewer</h3>
+    <p><strong>Powered by:</strong> <a href="http://potree.org" target="_blank">Potree</a> - A viewer for large point cloud datasets</p>
+    <p><strong>Author:</strong> <a href="https://pimpilimpo.github.io">Robert Langendörfer</a></p>
+    <p><strong>Institution:</strong> Karlsruhe Institute of Technology</p>
+    <p><strong>Dataset:</strong> Industrial objects with confidence-based visualization</p>
+    <p><strong>Features:</strong></p>
+    <ul style="margin: 5px 0; padding-left: 20px;">
+      <li>RGB color visualization</li>
+      <li>Confidence-based intensity mapping</li>
+      <li>Multiple colormap options</li>
+    </ul>
+    <p><strong>Controls:</strong> Use the Material dropdown to switch between RGB and Confidence modes. Click colormap strips to change visualization.</p>
+  </div>
 `);
 
 // CONTENT & ACTIONS
 
-{ // MATERIAL SWITCHING
-  elToolbar.find("img[name=action_rgb]").click( () => {
-    if (globalPointcloud) {
-      globalPointcloud.material.activeAttributeName = "rgba";
-      console.log('Switched to RGB colors');
-    }
-  });
+{ // MATERIAL DROPDOWN (based on toolbar example)
+  let options = [
+    "RGB", 
+    "Confidence"
+  ];
 
-  elToolbar.find("img[name=action_intensity]").click( () => {
+  let attributeSelection = elToolbar.find('#optMaterial');
+  for(let option of options){
+    let elOption = $(`<option>${option}</option>`);
+    attributeSelection.append(elOption);
+  }
+
+  const updateMaterialSelection = (event, ui) => {
+    let selectedValue = attributeSelection.selectmenu().val();
+
     if (globalPointcloud) {
-      globalPointcloud.material.activeAttributeName = "intensity";
-      globalPointcloud.material.gradient = Potree.Gradients.SPECTRAL;
-      globalPointcloud.material.intensityRange = [0, 65535];
-      console.log('Switched to intensity with colormap');
+      if (selectedValue === "RGB") {
+        globalPointcloud.material.activeAttributeName = "rgba";
+        console.log('Switched to RGB colors');
+      } else if (selectedValue === "Confidence") {
+        globalPointcloud.material.activeAttributeName = "intensity";
+        globalPointcloud.material.gradient = Potree.Gradients.SPECTRAL;
+        globalPointcloud.material.intensityRange = [0, 65535];
+        console.log('Switched to confidence with colormap');
+      }
     }
-  });
+  };
+
+  attributeSelection.selectmenu({change: updateMaterialSelection});
 }
 
 { // GRADIENT (based on toolbar example)
@@ -383,7 +460,7 @@ elToolbar.html(`
 
   for(const scheme of schemes){
     const elButton = $(`
-      <span style="cursor: pointer; margin: 1px;"></span>
+      <span style="cursor: pointer; margin: 1px;" title="${scheme.name}"></span>
     `);
 
     const svg = Potree.Utils.createSvgGradient(scheme.values);
@@ -395,15 +472,39 @@ elToolbar.html(`
 
     elButton.click( () => {
       if (globalPointcloud) {
+        // First ensure we're in intensity/confidence mode
         globalPointcloud.material.activeAttributeName = "intensity";
         globalPointcloud.material.gradient = Potree.Gradients[scheme.name];
         globalPointcloud.material.intensityRange = [0, 65535];
+        
+        // Update the material dropdown to reflect confidence mode
+        const attributeSelection = elToolbar.find('#optMaterial');
+        if (attributeSelection.selectmenu("instance")) {
+          attributeSelection.selectmenu("value", "Confidence");
+        }
+        
         console.log('Applied gradient:', scheme.name);
       }
     });
 
     elGradientSchemes.append(elButton);
   }
+}
+
+{ // ABOUT FUNCTIONALITY
+  elToolbar.find("button[name=action_about]").click( () => {
+    const aboutPanel = $("#about_panel");
+    aboutPanel.toggle();
+    
+    // Close about panel when clicking elsewhere
+    if (aboutPanel.is(':visible')) {
+      $(document).one('click', function(e) {
+        if (!$(e.target).closest('#about_panel, button[name=action_about]').length) {
+          aboutPanel.hide();
+        }
+      });
+    }
+  });
 }
 
 </script>
