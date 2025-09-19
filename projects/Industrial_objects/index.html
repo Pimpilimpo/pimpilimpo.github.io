@@ -283,7 +283,7 @@ viewer.setEDLEnabled(true);
 viewer.setFOV(60);
 viewer.setPointBudget(1_000_000);
 viewer.loadSettingsFromURL();
-viewer.setBackground("none");
+viewer.setBackground("white");
 
 viewer.setDescription("");
 
@@ -307,7 +307,18 @@ window.updateConfidenceFilter = function() {
   // Set intensity range to match your scaled values (0 to 65535)
   material.intensityRange = [0, 65535];
   
+  // Force material update
+  material.needsUpdate = true;
+  
+  // Also update the dropdown to reflect the current gradient
+  const gradientSelect = $('#gradientSelect');
+  if (gradientSelect.length) {
+    gradientSelect.val('SPECTRAL');
+  }
+  
   console.log('Switched to intensity material with colormap');
+  console.log('Current gradient:', material.gradient);
+  console.log('Intensity range:', material.intensityRange);
 }
 
 window.resetConfidenceFilter = function() {
@@ -325,14 +336,36 @@ window.resetConfidenceFilter = function() {
 
 // Function to change colormap for intensity visualization
 window.setGradient = function(gradientName) {
-  if (!globalPointcloud) return;
+  if (!globalPointcloud) {
+    console.error('No point cloud loaded');
+    return;
+  }
   
   const material = globalPointcloud.material;
   
   // Only apply gradient if we're in intensity mode
   if (material.activeAttributeName === "intensity") {
-    material.gradient = Potree.Gradients[gradientName];
-    console.log('Applied gradient:', gradientName);
+    // Check if the gradient exists
+    if (Potree.Gradients[gradientName]) {
+      console.log('Applying gradient:', gradientName);
+      console.log('Current material attribute:', material.activeAttributeName);
+      console.log('Gradient object:', Potree.Gradients[gradientName]);
+      
+      material.gradient = Potree.Gradients[gradientName];
+      
+      // Force material update
+      material.needsUpdate = true;
+      
+      // Also try updating the intensity range to ensure proper visualization
+      material.intensityRange = [0, 65535];
+      
+      console.log('Gradient applied successfully');
+    } else {
+      console.error('Gradient not found:', gradientName);
+      console.log('Available gradients:', Object.keys(Potree.Gradients));
+    }
+  } else {
+    console.log('Not in intensity mode, current attribute:', material.activeAttributeName);
   }
 }
 
@@ -344,8 +377,8 @@ viewer.loadGUI(() => {
   viewer.setLanguage('en');
   $("#menu_appearance").next().show();
   
-  // Enable sidebar toggle - comment this out if you want sidebar open by default
-  //viewer.toggleSidebar();
+  // Enable sidebar toggle - the sidebar is retractable by default in Potree
+  viewer.toggleSidebar();
   
   // Add custom confidence slider section using Potree's accordion system (like test2.html)
   let section = $(`
@@ -368,15 +401,8 @@ viewer.loadGUI(() => {
         </div>
         <div style="margin-bottom: 15px;">
           <label style="display: block; margin-bottom: 5px; font-size: 11px; color: #ccc;">Colormap:</label>
-          <select onchange="setGradient(this.value)" 
+          <select id="gradientSelect" onchange="setGradient(this.value)" 
                   style="width: 100%; background: #444; color: white; border: 1px solid #666; padding: 6px; border-radius: 3px; font-size: 11px;">
-            <option value="SPECTRAL">Spectral</option>
-            <option value="YELLOW_GREEN">Yellow Green</option>
-            <option value="PLASMA">Plasma</option>
-            <option value="GRAYSCALE">Grayscale</option>
-            <option value="RAINBOW">Rainbow</option>
-            <option value="HOT">Hot</option>
-            <option value="COLD">Cold</option>
           </select>
         </div>
         <div style="margin-top: 10px; font-size: 11px; color: #999; line-height: 1.3;">
@@ -396,6 +422,22 @@ viewer.loadGUI(() => {
   // Ensure confidence section is open by default
   setTimeout(() => {
     content.show(); // Make sure confidence section is visible
+    
+    // Populate gradient dropdown with available gradients
+    const gradientSelect = $('#gradientSelect');
+    const availableGradients = Object.keys(Potree.Gradients);
+    console.log('Available Potree gradients:', availableGradients);
+    
+    // Add options for each available gradient
+    availableGradients.forEach(gradientName => {
+      const option = $(`<option value="${gradientName}">${gradientName}</option>`);
+      gradientSelect.append(option);
+    });
+    
+    // Set default to SPECTRAL if available
+    if (availableGradients.includes('SPECTRAL')) {
+      gradientSelect.val('SPECTRAL');
+    }
   }, 600);
   
   // Hide unwanted menu sections
@@ -419,46 +461,6 @@ viewer.loadGUI(() => {
       }
     });
   }, 500);
-
-  // Add toggle functionality to make sidebar retractable
-  setTimeout(() => {
-    const sidebar = $('.sidebar_root');
-    const toggleButton = $('<div>')
-      .css({
-        position: 'absolute',
-        top: '10px',
-        right: '10px',
-        width: '30px',
-        height: '30px',
-        background: '#444',
-        border: '1px solid #666',
-        borderRadius: '3px',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'white',
-        fontSize: '16px',
-        zIndex: '1000'
-      })
-      .html('&times;')
-      .attr('title', 'Toggle Sidebar');
-
-    let sidebarVisible = true;
-    
-    toggleButton.click(() => {
-      if (sidebarVisible) {
-        sidebar.animate({left: '-300px'}, 300);
-        toggleButton.css({left: '10px'}).html('☰');
-      } else {
-        sidebar.animate({left: '0px'}, 300);
-        toggleButton.css({left: 'auto', right: '10px'}).html('&times;');
-      }
-      sidebarVisible = !sidebarVisible;
-    });
-
-    sidebar.append(toggleButton);
-  }, 1000);
 });
 
 // Load point cloud using metadata.json format
