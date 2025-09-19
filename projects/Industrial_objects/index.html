@@ -383,14 +383,23 @@ elToolbar.html(`
 
   <span class="potree_toolbar_separator" />
 
-  <span>
-    <div class="potree_toolbar_label">
-      Colormap
-    </div>
-    <div>
-      <span name="gradient_schemes"></span>
-    </div>
-  </span>
+    <span class="potree_toolbar_separator" />
+
+    <span>
+      <div class="potree_toolbar_label">
+        Confidence
+      </div>
+      <div style="display: flex; align-items: flex-start;">
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <span name="gradient_schemes"></span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: flex-start; margin-left: 8px;">
+          <span style="font-size: 0.8em; color: #888; font-weight: bold;">High</span>
+          <span style="flex: 1;"></span>
+          <span style="font-size: 0.8em; color: #888;">Low</span>
+        </div>
+      </div>
+    </span>
 
   <span class="potree_toolbar_separator" />
 
