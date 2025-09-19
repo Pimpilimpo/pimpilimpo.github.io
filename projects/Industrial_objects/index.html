@@ -438,16 +438,17 @@ $("#potree_render_area").append(`
   const updateMaterialSelection = (event, ui) => {
     let selectedValue = attributeSelection.selectmenu().val();
 
-    if (globalPointcloud) {
-      if (selectedValue === "RGB") {
-        globalPointcloud.material.activeAttributeName = "rgba";
-        console.log('Switched to RGB colors');
-      } else if (selectedValue === "Confidence") {
-        globalPointcloud.material.activeAttributeName = "intensity";
-        globalPointcloud.material.gradient = Potree.Gradients.SPECTRAL;
-        globalPointcloud.material.intensityRange = [0, 65535];
-        console.log('Switched to confidence with colormap');
-      }
+    // Use the same approach as toolbar example
+    if (selectedValue === "RGB") {
+      viewer.scene.pointclouds.forEach( pc => pc.material.activeAttributeName = "rgba" );
+      console.log('Switched to RGB colors');
+    } else if (selectedValue === "Confidence") {
+      viewer.scene.pointclouds.forEach( pc => {
+        pc.material.activeAttributeName = "intensity";
+        pc.material.gradient = Potree.Gradients.TURBO;
+        pc.material.intensityRange = [0, 65535];
+      });
+      console.log('Switched to confidence with colormap');
     }
   };
 
@@ -471,20 +472,20 @@ $("#potree_render_area").append(`
     elButton.append($(svg));
 
     elButton.click( () => {
-      if (globalPointcloud) {
-        // First ensure we're in intensity/confidence mode
-        globalPointcloud.material.activeAttributeName = "intensity";
-        globalPointcloud.material.gradient = Potree.Gradients[scheme.name];
-        globalPointcloud.material.intensityRange = [0, 65535];
-        
-        // Update the material dropdown to reflect confidence mode
-        const attributeSelection = elToolbar.find('#optMaterial');
-        if (attributeSelection.selectmenu("instance")) {
-          attributeSelection.selectmenu("value", "Confidence");
-        }
-        
-        console.log('Applied gradient:', scheme.name);
+      // Use the same approach as toolbar example
+      viewer.scene.pointclouds.forEach( pc => {
+        pc.material.activeAttributeName = "intensity";
+        pc.material.gradient = Potree.Gradients[scheme.name];
+        pc.material.intensityRange = [0, 65535];
+      });
+      
+      // Update the material dropdown to reflect confidence mode
+      const attributeSelection = elToolbar.find('#optMaterial');
+      if (attributeSelection.selectmenu("instance")) {
+        attributeSelection.selectmenu("value", "Confidence");
       }
+      
+      console.log('Applied gradient:', scheme.name);
     });
 
     elGradientSchemes.append(elButton);
