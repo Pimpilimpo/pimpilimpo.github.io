@@ -440,20 +440,13 @@ $("#potree_render_area").append(`
 
     // Use the same approach as toolbar example
     if (selectedValue === "RGB") {
-      viewer.scene.pointclouds.forEach( pc => {
-        pc.material.materialType = Potree.PointColorType.RGB;
-        pc.material.activeAttributeName = "rgba";
-      });
+      viewer.scene.pointclouds.forEach( pc => pc.material.activeAttributeName = "rgba" );
       console.log('Switched to RGB colors');
     } else if (selectedValue === "Confidence") {
       viewer.scene.pointclouds.forEach( pc => {
-        pc.material.materialType = Potree.PointColorType.INTENSITY;
         pc.material.activeAttributeName = "intensity";
         pc.material.gradient = Potree.Gradients.TURBO;
         pc.material.intensityRange = [0, 65535];
-        
-        // Force material update
-        pc.material.updateShaderSource();
       });
       console.log('Switched to confidence with colormap');
     }
@@ -481,14 +474,9 @@ $("#potree_render_area").append(`
     elButton.click( () => {
       // Use the same approach as toolbar example
       viewer.scene.pointclouds.forEach( pc => {
-        // Set material type to enable intensity color interpretation
-        pc.material.materialType = Potree.PointColorType.INTENSITY;
         pc.material.activeAttributeName = "intensity";
         pc.material.gradient = Potree.Gradients[scheme.name];
         pc.material.intensityRange = [0, 65535];
-        
-        // Force material update
-        pc.material.updateShaderSource();
       });
       
       // Update the material dropdown to reflect confidence mode
