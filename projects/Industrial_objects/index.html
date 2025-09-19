@@ -283,6 +283,7 @@ viewer.setEDLEnabled(true);
 viewer.setFOV(60);
 viewer.setPointBudget(1_000_000);
 viewer.loadSettingsFromURL();
+viewer.setBackground("none");
 
 viewer.setDescription("");
 
@@ -306,8 +307,6 @@ window.updateConfidenceFilter = function() {
   // Set intensity range to match your scaled values (0 to 65535)
   material.intensityRange = [0, 65535];
   
-  // Force update
-  viewer.setScene(viewer.scene);
   console.log('Switched to intensity material with colormap');
 }
 
@@ -321,8 +320,6 @@ window.resetConfidenceFilter = function() {
   // Switch back to RGB colors
   material.activeAttributeName = "rgba";
   
-  // Force update
-  viewer.setScene(viewer.scene);
   console.log('Switched back to RGB colors');
 }
 
@@ -335,7 +332,6 @@ window.setGradient = function(gradientName) {
   // Only apply gradient if we're in intensity mode
   if (material.activeAttributeName === "intensity") {
     material.gradient = Potree.Gradients[gradientName];
-    viewer.setScene(viewer.scene);
     console.log('Applied gradient:', gradientName);
   }
 }
