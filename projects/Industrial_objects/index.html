@@ -478,12 +478,16 @@ $("#potree_render_area").append(`
 
     elButton.click( () => {
       // Use the same approach as toolbar example
-      viewer.scene.pointclouds.forEach( pc => {
-        pc.material.pointColorType = Potree.PointColorType.INTENSITY;
-        pc.material.activeAttributeName = "intensity";
-        pc.material.gradient = Potree.Gradients[scheme.name];
-        pc.material.intensityRange = [0, 65535];
-      });
+        viewer.scene.pointclouds.forEach( pc => {
+          pc.material.activeAttributeName = "intensity";
+          pc.material.gradient = Potree.Gradients[scheme.name];
+          pc.material.intensityRange = [0, 65535];
+          if (typeof pc.material.updateShaderSource === 'function') {
+            pc.material.updateShaderSource();
+          } else {
+            pc.material.needsUpdate = true;
+          }
+        });
       
       // Update the material dropdown to reflect confidence mode
       const attributeSelection = elToolbar.find('#optMaterial');
