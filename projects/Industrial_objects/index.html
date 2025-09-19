@@ -424,49 +424,51 @@ $("#potree_render_area").append(`
 
 // CONTENT & ACTIONS
 
-{ // MATERIAL DROPDOWN (based on toolbar example)
-  let options = [
-    "RGB", 
-    "Confidence"
-  ];
-
-  let attributeSelection = elToolbar.find('#optMaterial');
-  for(let option of options){
-    let elOption = $(`<option>${option}</option>`);
-    attributeSelection.append(elOption);
-  }
-
-  const updateMaterialSelection = (event, ui) => {
-    let selectedValue = attributeSelection.selectmenu().val();
-
-    // Use the same approach as toolbar example
-      if (selectedValue === "RGB") {
-        viewer.scene.pointclouds.forEach( pc => {
-          pc.material.activeAttributeName = "rgba";
-        });
-        console.log('Switched to RGB colors');
-      } else if (selectedValue === "Confidence") {
-        viewer.scene.pointclouds.forEach( pc => {
-          pc.material.activeAttributeName = "intensity gradient";
-          pc.material.gradient = Potree.Gradients.TURBO;
-          pc.material.intensityRange = [0, 65535];
-          if (typeof pc.material.updateShaderSource === 'function') {
-            pc.material.updateShaderSource();
-          } else {
-            pc.material.needsUpdate = true;
-          }
-        });
-        console.log('Switched to confidence with colormap');
-      }
-  };
-
-  attributeSelection.selectmenu({change: updateMaterialSelection});
-}
-
-{ // GRADIENT (based on toolbar example)
-  const schemes = Object.keys(Potree.Gradients).map(name => ({name: name, values: Potree.Gradients[name]}));
+{ // GRADIENT (only TURBO, VIRIDIS, GRAYSCALE, with legend and correct attribute)
+  const allowedSchemes = ["TURBO", "VIRIDIS", "GRAYSCALE"];
+  const schemes = allowedSchemes.map(name => ({name: name, values: Potree.Gradients[name]}));
   const elGradientSchemes = elToolbar.find("span[name=gradient_schemes]");
 
+  for(const scheme of schemes){
+    const elButton = $(`
+      <span style="display: inline-block; text-align: center; margin: 2px;" title="${scheme.name}"></span>
+    `);
+
+    const svg = Potree.Utils.createSvgGradient(scheme.values);
+    svg.setAttributeNS(null, "class", `button-icon`);
+    svg.style.height = "2em";
+    svg.style.width = "3em";
+
+    elButton.append($(svg));
+
+    // Add legend for confidence
+    elButton.append(`<div style="font-size: 0.7em; display: flex; justify-content: space-between; width: 3em;">
+      <span style="color: #888;">Low</span><span style="color: #888;">High</span>
+    </div>`);
+
+    elButton.click( () => {
+      viewer.scene.pointclouds.forEach( pc => {
+        pc.material.activeAttributeName = "intensity gradient";
+        pc.material.gradient = Potree.Gradients[scheme.name];
+        pc.material.intensityRange = [0, 65535];
+        if (typeof pc.material.updateShaderSource === 'function') {
+          pc.material.updateShaderSource();
+        } else {
+          pc.material.needsUpdate = true;
+        }
+      });
+      // Update the material dropdown to reflect confidence mode
+      const attributeSelection = elToolbar.find('#optMaterial');
+      try {
+        attributeSelection.selectmenu("option", "value", "Confidence");
+      } catch(e) {
+        attributeSelection.val("Confidence");
+      }
+      console.log('Applied gradient:', scheme.name);
+    });
+
+    elGradientSchemes.append(elButton);
+  }
   for(const scheme of schemes){
     const elButton = $(`
       <span style="cursor: pointer; margin: 1px;" title="${scheme.name}"></span>
