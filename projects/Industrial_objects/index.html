@@ -377,29 +377,31 @@ elToolbar.html(`
       Material
     </div>
     <div>
-      <select id="optMaterial" name="optMaterial"></select>
+      <button id="materialDropdown" style="background: #333; color: white; border: 1px solid #666; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; min-width: 90px; text-align: left;">RGB ▼</button>
+      <ul id="materialMenu" style="display:none; position:absolute; background:#222; color:white; list-style:none; margin:0; padding:0; border:1px solid #666; border-radius:3px; z-index:10001; min-width:90px;">
+        <li data-value="RGB" style="padding:4px 8px; cursor:pointer;">RGB</li>
+        <li data-value="Confidence" style="padding:4px 8px; cursor:pointer;">Confidence</li>
+      </ul>
     </div>
   </span>
 
   <span class="potree_toolbar_separator" />
 
-    <span class="potree_toolbar_separator" />
-
-    <span>
-      <div class="potree_toolbar_label">
-        Confidence
+  <span>
+    <div class="potree_toolbar_label">
+      Confidence
+    </div>
+    <div style="display: flex; align-items: flex-start;">
+      <div style="display: flex; flex-direction: column; gap: 2px;">
+        <span name="gradient_schemes"></span>
       </div>
-      <div style="display: flex; align-items: flex-start;">
-        <div style="display: flex; flex-direction: column; gap: 2px;">
-          <span name="gradient_schemes"></span>
-        </div>
-        <div style="display: flex; flex-direction: column; align-items: flex-start; margin-left: 8px;">
-          <span style="font-size: 0.8em; color: #888; font-weight: bold;">High</span>
-          <span style="flex: 1;"></span>
-          <span style="font-size: 0.8em; color: #888;">Low</span>
-        </div>
+      <div style="display: flex; flex-direction: column; align-items: flex-start; margin-left: 8px; height: 100%; justify-content: space-between;">
+        <span style="font-size: 0.8em; color: #888; font-weight: bold;">High</span>
+        <span style="flex: 1;"></span>
+        <span style="font-size: 0.8em; color: #888;">Low</span>
       </div>
-    </span>
+    </div>
+  </span>
 
   <span class="potree_toolbar_separator" />
 
@@ -448,7 +450,7 @@ $("#potree_render_area").append(`
     svg.style.height = "2em";
     svg.style.width = "3em";
 
-    elButton.append($(svg));
+    //elButton.append($(svg));
 
     // Add legend for confidence
     elButton.append(`<div style="font-size: 0.7em; display: flex; justify-content: space-between; width: 3em;">
@@ -535,6 +537,38 @@ $("#potree_render_area").append(`
   });
 }
 
+// Material dropdown logic
+const materialDropdown = $("#materialDropdown");
+const materialMenu = $("#materialMenu");
+materialDropdown.on("click", function(e) {
+  e.stopPropagation();
+  materialMenu.toggle();
+});
+materialMenu.on("click", "li", function(e) {
+  const selectedValue = $(this).data("value");
+  materialDropdown.text(selectedValue + " ▼");
+  materialMenu.hide();
+  if (selectedValue === "RGB") {
+    viewer.scene.pointclouds.forEach( pc => {
+      pc.material.activeAttributeName = "rgba";
+    });
+    console.log('Switched to RGB colors');
+  } else if (selectedValue === "Confidence") {
+    viewer.scene.pointclouds.forEach( pc => {
+      pc.material.activeAttributeName = "intensity gradient";
+      pc.material.gradient = Potree.Gradients.TURBO;
+      pc.material.intensityRange = [0, 65535];
+      if (typeof pc.material.updateShaderSource === 'function') {
+        pc.material.updateShaderSource();
+      } else {
+        pc.material.needsUpdate = true;
+      }
+    });
+    console.log('Switched to confidence with colormap');
+  }
+});
+// Hide menu on outside click
+$(document).on("click", function() { materialMenu.hide(); });
 </script>
 
 </body>
