@@ -61,22 +61,6 @@
       z-index: 11; /* Render area above container */
     }
     
-    #potree_sidebar_container {
-      position: absolute !important;
-      top: 0 !important;
-      left: 0 !important; /* Move to left side */
-      z-index: 1000 !important;
-      width: 300px !important;
-      height: 100% !important;
-      pointer-events: auto;
-      transition: transform 0.3s ease; /* Add smooth animation */
-    }
-    
-    /* Hidden state for sidebar */
-    #potree_sidebar_container.hidden {
-      transform: translateX(-100%) !important;
-    }
-    
     /* Ensure canvas fills the render area */
     #potree_render_area canvas {
       position: absolute !important;
@@ -99,6 +83,33 @@
     
     #potree_wrapper .potree_container {
       pointer-events: auto; /* Allow events only on container */
+    }
+
+    /* Potree toolbar styling */
+    #potree_toolbar{
+      position: absolute; 
+      z-index: 10000; 
+      left: 10px; 
+      top: 10px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 0.3em 0.8em;
+      font-family: "system-ui";
+      border-radius: 0.3em;
+      display: flex;
+    }
+
+    .potree_toolbar_label{
+      text-align: center;
+      font-size: smaller;
+      opacity: 0.9;
+    }
+
+    .potree_toolbar_separator{
+      background: white;
+      padding: 0px;
+      margin: 5px 10px;
+      width: 1px;
     }
   </style>
 
@@ -195,8 +206,9 @@
           <!-- ===== POTREE VIEWER (centered) ===== -->
           <div id="potree_wrapper">
             <div class="potree_container">
-              <div id="potree_render_area"></div>
-              <div id="potree_sidebar_container"></div>
+              <div id="potree_render_area">
+                <div id="potree_toolbar"></div>
+              </div>
             </div>
           </div>
           <!-- ===== end viewer ===== -->
@@ -287,168 +299,16 @@ viewer.setBackground("white");
 
 viewer.setDescription("");
 
-// Global variables and functions for material switching
+// Global variables for material switching
 let globalPointcloud = null;
-
-// Make functions available in global scope (window object)
-window.updateConfidenceFilter = function() {
-  if (!globalPointcloud) return;
-  
-  console.log('Switching to intensity (confidence) material with colormap');
-  
-  const material = globalPointcloud.material;
-  
-  // Switch to intensity attribute (which contains your scaled confidence values)
-  material.activeAttributeName = "intensity";
-  
-  // Set up colormap visualization for intensity
-  material.gradient = Potree.Gradients.SPECTRAL;
-  
-  // Set intensity range to match your scaled values (0 to 65535)
-  material.intensityRange = [0, 65535];
-  
-  // Also update the dropdown to reflect the current gradient
-  const gradientSelect = $('#gradientSelect');
-  if (gradientSelect.length) {
-    gradientSelect.val('SPECTRAL');
-  }
-  
-  console.log('Switched to intensity material with colormap');
-}
-
-window.resetConfidenceFilter = function() {
-  if (!globalPointcloud) return;
-  
-  console.log('Switching back to RGB colors');
-  
-  const material = globalPointcloud.material;
-  
-  // Switch back to RGB colors
-  material.activeAttributeName = "rgba";
-  
-  console.log('Switched back to RGB colors');
-}
-
-// Function to change colormap for intensity visualization
-window.setGradient = function(gradientName) {
-  if (!globalPointcloud) {
-    console.error('No point cloud loaded');
-    return;
-  }
-  
-  const material = globalPointcloud.material;
-  
-  // Check if the gradient exists
-  if (Potree.Gradients[gradientName]) {
-    console.log('Applying gradient:', gradientName);
-    
-    // IMPORTANT: First set the attribute to intensity, then apply gradient
-    // This is how the toolbar example works
-    material.activeAttributeName = "intensity";
-    material.gradient = Potree.Gradients[gradientName];
-    material.intensityRange = [0, 65535];
-    
-    console.log('Gradient applied successfully');
-  } else {
-    console.error('Gradient not found:', gradientName);
-    console.log('Available gradients:', Object.keys(Potree.Gradients));
-  }
-}
-
-// Make functions available globally
-window.updateConfidenceFilter = updateConfidenceFilter;
-window.resetConfidenceFilter = resetConfidenceFilter;
 
 viewer.loadGUI(() => {
   viewer.setLanguage('en');
-  // Start with appearance section closed (but not hidden)
-  
-  // Enable sidebar toggle - the sidebar is retractable by default in Potree
+  // Hide all sidebar sections by default
   viewer.toggleSidebar();
-  
-  // Add custom confidence slider section using Potree's accordion system (like test2.html)
-  let section = $(`
-    <h3 id="menu_confidence" class="accordion-header ui-widget"><span>Material Visualization</span></h3>
-    <div class="accordion-content ui-widget pv-menu-list"></div>
-  `);
-  let content = section.last();
-  content.html(`
-    <div class="pv-menu-list">
-      <div style="padding: 10px;">
-        <div style="margin-bottom: 15px;">
-          <button onclick="resetConfidenceFilter()" 
-                  style="width: 47%; background: #444; color: white; border: 1px solid #666; padding: 8px; border-radius: 3px; cursor: pointer; margin-right: 6%; font-size: 12px;">
-            RGB Colors
-          </button>
-          <button onclick="updateConfidenceFilter()" 
-                  style="width: 47%; background: #444; color: white; border: 1px solid #666; padding: 8px; border-radius: 3px; cursor: pointer; font-size: 12px;">
-            Intensity (Confidence)
-          </button>
-        </div>
-        <div style="margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; font-size: 11px; color: #ccc;">Colormap:</label>
-          <select id="gradientSelect" onchange="setGradient(this.value)" 
-                  style="width: 100%; background: #444; color: white; border: 1px solid #666; padding: 6px; border-radius: 3px; font-size: 11px;">
-          </select>
-        </div>
-        <div style="margin-top: 10px; font-size: 11px; color: #999; line-height: 1.3;">
-          <strong>RGB Colors:</strong> Shows original point cloud colors<br>
-          <strong>Intensity:</strong> Shows confidence values (0-65535) with colormap
-        </div>
-      </div>
-    </div>
-  `);
-  
-  // Make the section collapsible and open by default
-  section.first().click(() => content.slideToggle());
-  
-  // Insert before the About section
-  section.insertBefore($('#menu_about'));
-  
-  // Ensure confidence section is open by default
-  setTimeout(() => {
-    content.show(); // Make sure confidence section is visible
-    
-    // Populate gradient dropdown with available gradients
-    const gradientSelect = $('#gradientSelect');
-    const availableGradients = Object.keys(Potree.Gradients);
-    console.log('Available Potree gradients:', availableGradients);
-    
-    // Add options for each available gradient
-    availableGradients.forEach(gradientName => {
-      const option = $(`<option value="${gradientName}">${gradientName}</option>`);
-      gradientSelect.append(option);
-    });
-    
-    // Set default to SPECTRAL if available
-    if (availableGradients.includes('SPECTRAL')) {
-      gradientSelect.val('SPECTRAL');
-    }
-  }, 600);
-  
-  // Hide unwanted menu sections (but not appearance)
-  setTimeout(() => {
-    const sectionsToHide = [
-      '#menu_tools',
-      '#menu_clipping', 
-      '#menu_filters',
-      '#menu_measurements',
-      '#menu_annotations',
-      '#menu_other_settings',
-      '#menu_navigation',
-      '#menu_scene'
-    ];
-    
-    sectionsToHide.forEach(selector => {
-      const element = document.querySelector(selector);
-      if (element) {
-        element.style.display = 'none';
-      }
-    });
-  }, 500);
 });
 
-// Load point cloud using metadata.json format
+// Load point cloud
 let url = "pointcloud_test/metadata.json";
 
 Potree.loadPointCloud(url).then(e => {
@@ -460,10 +320,91 @@ Potree.loadPointCloud(url).then(e => {
   material.activeAttributeName = "rgba";
   material.minSize = 2;
   material.pointSizeType = Potree.PointSizeType.ADAPTIVE;
+  material.intensityRange = [0, 65535]; // Set range for intensity
 
   viewer.scene.addPointCloud(pointcloud);
   viewer.fitToScreen();
 });
+
+</script>
+
+<script type="module">
+
+import * as THREE from "./Potree_1.8.2/libs/three.js/build/three.module.js";
+
+// Create toolbar HTML (based on toolbar example)
+const elToolbar = $("#potree_toolbar");
+elToolbar.html(`
+  <span>
+    <div class="potree_toolbar_label">
+      Material
+    </div>
+    <div>
+      <img name="action_rgb" src="Potree_1.8.2/build/potree/resources/icons/rgb.svg" class="annotation-action-icon" style="width: 2em; height: auto; cursor: pointer; margin: 2px;"/>
+      <img name="action_intensity" src="Potree_1.8.2/build/potree/resources/icons/profile.svg" class="annotation-action-icon" style="width: 2em; height: auto; cursor: pointer; margin: 2px;"/>
+    </div>
+  </span>
+
+  <span class="potree_toolbar_separator" />
+
+  <span>
+    <div class="potree_toolbar_label">
+      Colormap
+    </div>
+    <div>
+      <span name="gradient_schemes"></span>
+    </div>
+  </span>
+`);
+
+// CONTENT & ACTIONS
+
+{ // MATERIAL SWITCHING
+  elToolbar.find("img[name=action_rgb]").click( () => {
+    if (globalPointcloud) {
+      globalPointcloud.material.activeAttributeName = "rgba";
+      console.log('Switched to RGB colors');
+    }
+  });
+
+  elToolbar.find("img[name=action_intensity]").click( () => {
+    if (globalPointcloud) {
+      globalPointcloud.material.activeAttributeName = "intensity";
+      globalPointcloud.material.gradient = Potree.Gradients.SPECTRAL;
+      globalPointcloud.material.intensityRange = [0, 65535];
+      console.log('Switched to intensity with colormap');
+    }
+  });
+}
+
+{ // GRADIENT (based on toolbar example)
+  const schemes = Object.keys(Potree.Gradients).map(name => ({name: name, values: Potree.Gradients[name]}));
+  const elGradientSchemes = elToolbar.find("span[name=gradient_schemes]");
+
+  for(const scheme of schemes){
+    const elButton = $(`
+      <span style="cursor: pointer; margin: 1px;"></span>
+    `);
+
+    const svg = Potree.Utils.createSvgGradient(scheme.values);
+    svg.setAttributeNS(null, "class", `button-icon`);
+    svg.style.height = "2em";
+    svg.style.width = "1.3em";
+
+    elButton.append($(svg));
+
+    elButton.click( () => {
+      if (globalPointcloud) {
+        globalPointcloud.material.activeAttributeName = "intensity";
+        globalPointcloud.material.gradient = Potree.Gradients[scheme.name];
+        globalPointcloud.material.intensityRange = [0, 65535];
+        console.log('Applied gradient:', scheme.name);
+      }
+    });
+
+    elGradientSchemes.append(elButton);
+  }
+}
 
 </script>
 
