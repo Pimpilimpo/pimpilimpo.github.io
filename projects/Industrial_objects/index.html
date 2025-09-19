@@ -367,6 +367,7 @@ Potree.loadPointCloud(url).then(e => {
 
 <script type="module">
 
+import * as THREE from "./Potree_1.8.2/libs/three.js/build/three.module.js";
 
 // Create toolbar HTML (based on toolbar example)
 const elToolbar = $("#potree_toolbar");
@@ -447,7 +448,7 @@ $("#potree_render_area").append(`
       console.log('Switched to RGB colors');
     } else if (selectedValue === "Confidence") {
       viewer.scene.pointclouds.forEach( pc => {
-        pc.material.pointColorType = Potree.PointColorType.INTENSITY_GRADIENT;
+        pc.material.pointColorType = Potree.PointColorType.INTENSITY;
         pc.material.activeAttributeName = "intensity";
         pc.material.gradient = Potree.Gradients.TURBO;
         pc.material.intensityRange = [0, 65535];
@@ -478,7 +479,7 @@ $("#potree_render_area").append(`
     elButton.click( () => {
       // Use the same approach as toolbar example
       viewer.scene.pointclouds.forEach( pc => {
-        pc.material.pointColorType = Potree.PointColorType.INTENSITY_GRADIENT;
+        pc.material.pointColorType = Potree.PointColorType.INTENSITY;
         pc.material.activeAttributeName = "intensity";
         pc.material.gradient = Potree.Gradients[scheme.name];
         pc.material.intensityRange = [0, 65535];
