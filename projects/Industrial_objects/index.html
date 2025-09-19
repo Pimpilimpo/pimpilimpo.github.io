@@ -307,9 +307,6 @@ window.updateConfidenceFilter = function() {
   // Set intensity range to match your scaled values (0 to 65535)
   material.intensityRange = [0, 65535];
   
-  // Force material update
-  material.needsUpdate = true;
-  
   // Also update the dropdown to reflect the current gradient
   const gradientSelect = $('#gradientSelect');
   if (gradientSelect.length) {
@@ -317,8 +314,6 @@ window.updateConfidenceFilter = function() {
   }
   
   console.log('Switched to intensity material with colormap');
-  console.log('Current gradient:', material.gradient);
-  console.log('Intensity range:', material.intensityRange);
 }
 
 window.resetConfidenceFilter = function() {
@@ -343,29 +338,20 @@ window.setGradient = function(gradientName) {
   
   const material = globalPointcloud.material;
   
-  // Only apply gradient if we're in intensity mode
-  if (material.activeAttributeName === "intensity") {
-    // Check if the gradient exists
-    if (Potree.Gradients[gradientName]) {
-      console.log('Applying gradient:', gradientName);
-      console.log('Current material attribute:', material.activeAttributeName);
-      console.log('Gradient object:', Potree.Gradients[gradientName]);
-      
-      material.gradient = Potree.Gradients[gradientName];
-      
-      // Force material update
-      material.needsUpdate = true;
-      
-      // Also try updating the intensity range to ensure proper visualization
-      material.intensityRange = [0, 65535];
-      
-      console.log('Gradient applied successfully');
-    } else {
-      console.error('Gradient not found:', gradientName);
-      console.log('Available gradients:', Object.keys(Potree.Gradients));
-    }
+  // Check if the gradient exists
+  if (Potree.Gradients[gradientName]) {
+    console.log('Applying gradient:', gradientName);
+    
+    // IMPORTANT: First set the attribute to intensity, then apply gradient
+    // This is how the toolbar example works
+    material.activeAttributeName = "intensity";
+    material.gradient = Potree.Gradients[gradientName];
+    material.intensityRange = [0, 65535];
+    
+    console.log('Gradient applied successfully');
   } else {
-    console.log('Not in intensity mode, current attribute:', material.activeAttributeName);
+    console.error('Gradient not found:', gradientName);
+    console.log('Available gradients:', Object.keys(Potree.Gradients));
   }
 }
 
@@ -375,7 +361,7 @@ window.resetConfidenceFilter = resetConfidenceFilter;
 
 viewer.loadGUI(() => {
   viewer.setLanguage('en');
-  $("#menu_appearance").next().show();
+  // Start with appearance section closed (but not hidden)
   
   // Enable sidebar toggle - the sidebar is retractable by default in Potree
   viewer.toggleSidebar();
@@ -440,10 +426,9 @@ viewer.loadGUI(() => {
     }
   }, 600);
   
-  // Hide unwanted menu sections
+  // Hide unwanted menu sections (but not appearance)
   setTimeout(() => {
     const sectionsToHide = [
-      '#menu_appearance',
       '#menu_tools',
       '#menu_clipping', 
       '#menu_filters',
