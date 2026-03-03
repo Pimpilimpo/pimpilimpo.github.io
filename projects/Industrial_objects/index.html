@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="MVM - IOD">
+  <meta name="keywords" content="Industrial Objects, 3D Reconstruction, VGGT, 3DGS">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MVM -IOD</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="icon" href="./static/images/favicon.svg">
+
+  <!-- POTREE CSS -->
+  <link rel="stylesheet" href="Potree_1.8.2/build/potree/potree.css">
+  <link rel="stylesheet" href="Potree_1.8.2/libs/jquery-ui/jquery-ui.min.css">
+  <link rel="stylesheet" href="Potree_1.8.2/libs/openlayers3/ol.css">
+  <link rel="stylesheet" href="Potree_1.8.2/libs/spectrum/spectrum.css">
+  <link rel="stylesheet" href="Potree_1.8.2/libs/jstree/themes/mixed/style.css">
+
+  <style>
+    html, body { height: 100%; }
+    /* small tweak so potree viewer sits nicely centered in the page */
+    #potree_wrapper { 
+      display: flex; 
+      justify-content: center; 
+      margin-top: 1.5rem;
+    }
+
+    #pc-section-wrapper {
+      position: relative;
+      width: 100%;
+      margin-top: 1.5rem;
+    }
+
+    #viewers-wrapper {
+      display: flex;
+      gap: 16px;
+      width: 100%;
+    }
+
+    .viewer-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .viewer-label {
+      font-size: 14px;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 6px;
+      color: #363636;
+    }
+    
+    /* Potree container styling */
+    .potree_container { 
+      position: relative;
+      width: 100%; 
+      height: 500px; 
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+      pointer-events: auto;
+      z-index: 10;
+    }
+    
+    #potree_render_area {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      pointer-events: auto; /* Ensure render area gets mouse events */
+      z-index: 11; /* Render area above container */
+    }
+    
+    /* Ensure canvas fills the render area */
+    #potree_render_area canvas {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      pointer-events: auto;
+    }
+
+    /* Second viewer render area */
+    #potree_render_area_2 {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      pointer-events: auto;
+      z-index: 11;
+    }
+
+    #potree_render_area_2 canvas {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      pointer-events: auto;
+    }
+    
+    /* Fix scrolling for the page */
+    body {
+      overflow-y: auto !important;
+    }
+    
+    /* Ensure potree doesn't block page scrolling */
+    #viewers-wrapper .viewer-col {
+      pointer-events: auto;
+    }
+
+    /* Potree toolbar styling */
+    #potree_toolbar {
+      background: rgba(30, 30, 30, 0.92);
+      color: white;
+      padding: 0.35em 0.9em;
+      font-family: "Google Sans", "Noto Sans", Castoro, sans-serif;
+      border-radius: 0.5em;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      width: 100%;
+      box-sizing: border-box;
+      margin-top: 10px;
+    }
+
+    .potree_toolbar_label{
+      text-align: center;
+      font-size: smaller;
+      opacity: 0.9;
+    }
+
+    .potree_toolbar_separator {
+      background: rgba(255,255,255,0.35);
+      padding: 0;
+      margin: 0 8px;
+      width: 1px;
+      height: 2.8em;
+      align-self: center;
+      flex-shrink: 0;
+    }
+
+    /* Each toolbar group: label on top, control below, all aligned consistently */
+    #potree_toolbar > span:not(.potree_toolbar_separator) {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 4px 0;
+    }
+
+    /* Sample image hint above each viewer */
+    .viewer-image-hint {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 6px;
+      gap: 10px;
+    }
+
+    /* Stacked-photos deck wrapper */
+    .viewer-image-stack {
+      position: relative;
+      display: inline-block;
+      /* extra margin so rotated ghost cards don't get clipped */
+      margin: 8px 18px 4px 8px;
+    }
+
+    /* Ghost card 2 (middle) */
+    .viewer-image-stack::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 7px;
+      border: 2px solid #c8c8c8;
+      background: #e8e8e8;
+      transform: rotate(3.5deg) translate(7px, -3px);
+      z-index: 1;
+    }
+
+    /* Ghost card 3 (back) */
+    .viewer-image-stack::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 7px;
+      border: 2px solid #b8b8b8;
+      background: #dcdcdc;
+      transform: rotate(7deg) translate(14px, -6px);
+      z-index: 0;
+    }
+
+    /* Main photo on top */
+    .viewer-image-stack img {
+      position: relative;
+      z-index: 2;
+      max-height: 200px;
+      width: auto;
+      border-radius: 7px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.22);
+      object-fit: contain;
+      border: 1px solid #ddd;
+      display: block;
+    }
+
+    .viewer-hint-arrow {
+      font-size: 26px;
+      line-height: 1;
+      color: #555;
+      margin: 0;
+    }
+
+    /* Preprocessing arrow between the two image stacks */
+    .preprocessing-arrow-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      width: 90px;
+    }
+
+    .preprocessing-arrow-box {
+      margin-top: 105px; /* align vertically with the center of the sample images */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .preprocessing-arrow-label {
+      font-size: 10px;
+      text-align: center;
+      color: #555;
+      line-height: 1.45;
+      margin: 0;
+      font-style: italic;
+    }
+
+    .preprocessing-arrow-line {
+      position: relative;
+      width: 70px;
+      height: 2px;
+      background: #888;
+    }
+
+    .preprocessing-arrow-line::after {
+      content: '';
+      position: absolute;
+      right: -1px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-left: 9px solid #888;
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+    }
+
+    /* Carousel smooth slide */
+    .synced-track {
+      transition: transform 0.4s ease;
+    }
+
+    /* References section */
+    .references-section {
+      margin-top: 2.5rem;
+      text-align: left;
+    }
+
+    .references-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #363636;
+    }
+
+    .references-list li {
+      display: flex;
+      gap: 0.6em;
+      margin-bottom: 0.6em;
+    }
+
+    .references-list li .ref-num {
+      flex-shrink: 0;
+      font-weight: 600;
+      color: #555;
+    }
+
+    /* About panel styling */
+    #about_panel {
+      position: absolute;
+      bottom: 46px;
+      top: auto;
+      right: 10px;
+      left: auto;
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      max-width: 400px;
+      font-family: "system-ui";
+      font-size: 12px;
+      line-height: 1.4;
+      z-index: 10001;
+      display: none;
+    }
+
+    #about_panel h3 {
+      margin: 0 0 10px 0;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    #about_panel p {
+      margin: 8px 0;
+    }
+
+    #about_panel a {
+      color: #4a9eff;
+      text-decoration: none;
+    }
+
+    #about_panel a:hover {
+      text-decoration: underline;
+    }
+  </style>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+</head>
+<body>
+
+<nav class="navbar" role="navigation" aria-label="main navigation">
+  <div class="navbar-brand">
+    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </a>
+  </div>
+  <div class="navbar-menu">
+    <div class="navbar-start" style="flex-grow: 1; justify-content: center;">
+      <!-- <a class="navbar-item" href="https://pimpilimpo.github.io">
+      <span class="icon">
+          <i class="fas fa-home"></i>
+      </span>
+      </a> -->
+
+
+    </div>
+
+  </div>
+</nav>
+
+
+<section class="hero" style="overflow: hidden;">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">MVM - IOD</h1>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="https://www.ipf.kit.edu/english/staff_2304.php">Robert Langendörfer</a>,</span>
+            <span class="author-block">
+              <a href="https://www.ipf.kit.edu/english/staff_hillemann.php">Markus Hillemann</a>,</span>
+            <span class="author-block">
+              <a href="https://www.ipf.kit.edu/english/staff_1658.php">Markus Ulrich</a>,</span>
+            </span>
+
+          </div>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">Karlsruhe Institute of Technology</span>
+
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- PDF Link. -->
+              <span class="link-block">
+                <a href=""
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper (Coming soon)</span>
+                </a>
+              </span>
+
+
+              <!-- Code Link. -->
+               <!-- https://github.com/Pimpilimpo/Industrial-objects -->
+              <span class="link-block">
+                <a href=""   
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code (Coming soon)</span>
+                  </a>
+              </span>
+              <!-- Dataset Link. -->
+              <span class="link-block">
+                <a href=""
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="far fa-images"></i>
+                  </span>
+                  <span>Data (Coming soon)</span>
+                  </a>
+            </div>
+
+          </div>
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Abstract. -->
+    <div class="columns is-centered">
+      <div class="column is-full has-text-left">
+        <h2 class="title is-3 has-text-centered">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            <strong>We introduce the Machine Vision Metrology Industrial Object Dataset
+            (MVM-IOD)</strong>, for evaluating 3D reconstruction, camera pose estimation and novel view synthesis of complex industrial objects. The hardware setup to acquire MVM-IOD consists of a camera, mounted upside
+            down due to space restrictions, at the end effector of an industrial robot arm. Images of typical industrial objects are captured
+            systematically, by moving the camera on a hemisphere around the objects.<strong> MVM-IOD contains the camera poses, the acquired RGB images,
+            and the 3D point cloud of 9 objects and 2 background choices resulting in 18 scenes</strong>, which allows evaluation of all image based
+            methods that compute a 3D reconstruction, camera poses, and/or novel views.
+            
+
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Abstract. -->
+          <!-- ===== SYNCED CAROUSEL ===== -->
+          <div class="synced-carousel-section">
+            <h2 class="title is-3" style="margin-bottom: 1rem;">Dataset Samples</h2>
+            <div class="synced-carousel">
+              <button class="synced-btn synced-prev">&#8249;</button>
+              <div class="synced-window">
+                <div class="synced-track">
+
+                  <div class="synced-slide">
+                    <div class="synced-img-row"><span class="synced-badge alu-badge">Alu</span><img src="images/birne_a/frame_00090.png" alt="Object 1 Alu"></div>
+                    <div class="synced-img-row"><span class="synced-badge green-badge">Green</span><img src="images/birne_g/frame_00090.png" alt="Object 1 Green"></div>
+                    <p class="synced-caption">Object 1</p>
+                  </div>
+
+                  <div class="synced-slide">
+                    <div class="synced-img-row"><span class="synced-badge alu-badge">Alu</span><img src="images/busrte1_a/frame_00090.png" alt="Object 2 Alu"></div>
+                    <div class="synced-img-row"><span class="synced-badge green-badge">Green</span><img src="images/busrte1_g/frame_00090.png" alt="Object 2 Green"></div>
+                    <p class="synced-caption">Object 2</p>
+                  </div>
+
+                  <div class="synced-slide">
+                    <div class="synced-img-row"><span class="synced-badge alu-badge">Alu</span><img src="images/burste2_a/frame_00090.png" alt="Object 3 Alu"></div>
+                    <div class="synced-img-row"><span class="synced-badge green-badge">Green</span><img src="images/burste2_g/frame_00090.png" alt="Object 3 Green"></div>
+                    <p class="synced-caption">Object 3</p>
+                  </div>
+
+                  <div class="synced-slide">
+                    <div class="synced-img-row"><span class="synced-badge alu-badge">Alu</span><img src="images/dose_a/frame_00090.png" alt="Object 4 Alu"></div>
+                    <div class="synced-img-row"><span class="synced-badge green-badge">Green</span><img src="images/dose_g/frame_00090.png" alt="Object 4 Green"></div>
+                    <p class="synced-caption">Object 4</p>
+                  </div>
+
+                  <div class="synced-slide">
+                    <div class="synced-img-row"><span class="synced-badge alu-badge">Alu</span><img src="images/haken_a/frame_00090.png" alt="Object 5 Alu"></div>
+                    <div class="synced-img-row"><span class="synced-badge green-badge">Green</span><img src="images/haken_g/frame_00090.png" alt="Object 5 Green"></div>
+                    <p class="synced-caption">Object 5</p>
+                  </div>
+
+                  <div class="synced-slide">
+                    <div class="synced-img-row"><span class="synced-badge alu-badge">Alu</span><img src="images/klinke_a/frame_00090.png" alt="Object 6 Alu"></div>
+                    <div class="synced-img-row"><span class="synced-badge green-badge">Green</span><img src="images/klinke_g/frame_00090.png" alt="Object 6 Green"></div>
+                    <p class="synced-caption">Object 6</p>
+                  </div>
+
+                  <div class="synced-slide">
+                    <div class="synced-img-row"><span class="synced-badge alu-badge">Alu</span><img src="images/sieb_a/frame_00090.png" alt="Object 7 Alu"></div>
+                    <div class="synced-img-row"><span class="synced-badge green-badge">Green</span><img src="images/sieb_g/frame_00090.png" alt="Object 7 Green"></div>
+                    <p class="synced-caption">Object 7</p>
+                  </div>
+
+                  <div class="synced-slide">
+                    <div class="synced-img-row"><span class="synced-badge alu-badge">Alu</span><img src="images/spanner_a/frame_00090.png" alt="Object 8 Alu"></div>
+                    <div class="synced-img-row"><span class="synced-badge green-badge">Green</span><img src="images/spanenr_g/frame_00090.png" alt="Object 8 Green"></div>
+                    <p class="synced-caption">Object 8</p>
+                  </div>
+
+                  <div class="synced-slide">
+                    <div class="synced-img-row"><span class="synced-badge alu-badge">Alu</span><img src="images/winkel_a/frame_00090.png" alt="Object 9 Alu"></div>
+                    <div class="synced-img-row"><span class="synced-badge green-badge">Green</span><img src="images/winkel_g/frame_00090.png" alt="Object 9 Green"></div>
+                    <p class="synced-caption">Object 9</p>
+                  </div>
+
+                </div>
+              </div>
+              <button class="synced-btn synced-next">&#8250;</button>
+            </div>
+            <div class="synced-dots"></div>
+          </div>
+          <!-- ===== end carousel ===== -->
+
+          <!-- ===== EXPERIMENTS ===== -->
+          <div class="experiments-section">
+            <h2 class="title is-3" style="margin-bottom: 1rem;">Experiments</h2>
+
+            <div class="content has-text-justified">
+              <p>
+                We extensively evaluate current
+                state-of-the-art 3D reconstruction and camera pose estimation methods, such as Structure from Motion <a href="#ref-1">[1]</a>, Multi-View Stereo <a href="#ref-2">[2]</a>,
+                Visual Geometry Grounded Transformer (VGGT) <a href="#ref-3">[3]</a>, &pi;&sup3;<a href="#ref-4">[4]</a>, as well as 2D Gaussian Splatting <a href="#ref-5">[5]</a> on MVM-IOD and report our findings to create a baseline
+                for future research. <strong>We found that our upside down capture setup generates images that are out-of distribution for both VGGT
+                and &pi;&sup3;</strong>, leading to suboptimal point clouds and camera poses. We show that in our case, out-of distribution images can be shifted
+                closer to the training distribution by applying preprocessing steps such as rotating the images by 180 degrees and changing the
+                aspect ratio of the images. This shows that in certain industrial applications, VGGT and &pi;&sup3; should
+                be used with caution.
+              </p>
+                          <p>
+                In the example below, we show a qualitative comparison of VGGT and &pi;&sup3; on the original MVM-IOD images and the preprocessed version of MVM-IOD. For VGGT, we show VGGT depth, which refers to the point cloud obtained from the depth map branch, as well as VGGT point which indicates the point cloud obtained from the point map branch.
+              </p>
+            </div>
+
+
+            </div>
+          </div>
+          <!-- ===== end experiments ===== -->
+
+          <!-- ===== POTREE VIEWERS (side by side) ===== -->
+          <div id="pc-section-wrapper">
+            <div id="viewers-wrapper">
+            <div class="viewer-col">
+              <p class="viewer-label">Original Images</p>
+              <div class="viewer-image-hint">
+                <div class="viewer-image-stack">
+                  <img src="images/frame_00240.png" alt="Sample frame (original)">
+                </div>
+                <span class="viewer-hint-arrow">&#8595;</span>
+              </div>
+              <div class="potree_container" id="potree_container_left">
+                <div id="potree_render_area" style="position:absolute;top:0;left:0;width:100%;height:100%;">
+                </div>
+              </div>
+            </div>
+            <!-- preprocessing arrow -->
+            <div class="preprocessing-arrow-col">
+              <div class="preprocessing-arrow-box">
+                <p class="preprocessing-arrow-label">cropping aspect ratio<br>to 4:3 and rotating<br>by 180°</p>
+                <div class="preprocessing-arrow-line"></div>
+              </div>
+            </div>
+            <div class="viewer-col">
+              <p class="viewer-label">Preprocessed Images</p>
+              <div class="viewer-image-hint">
+                <div class="viewer-image-stack">
+                  <img src="images/frame_00240_rot.png" alt="Sample frame (preprocessed)">
+                </div>
+                <span class="viewer-hint-arrow">&#8595;</span>
+              </div>
+              <div class="potree_container" id="potree_container_right">
+                <div id="potree_render_area_2" style="position:absolute;top:0;left:0;width:100%;height:100%;"></div>
+              </div>
+            </div>
+          </div><!-- end #viewers-wrapper -->
+            <div id="potree_toolbar"></div>
+          </div><!-- end #pc-section-wrapper -->
+          <!-- ===== end viewers ===== -->
+
+          <!-- ===== REFERENCES ===== -->
+          <div class="references-section">
+            <h2 class="title is-3 has-text-centered" style="margin-bottom: 1rem;">References</h2>
+            <div class="content">
+              <ol class="references-list">
+                <li id="ref-1">
+                  <span class="ref-num">[1]</span>
+                  <span>J. L. Schönberger and J.-M. Frahm, &ldquo;Structure-from-Motion Revisited,&rdquo; in <em>Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)</em>, 2016.</span>
+                </li>
+                <li id="ref-2">
+                  <span class="ref-num">[2]</span>
+                  <span>J. L. Schönberger, E. Zheng, M. Pollefeys, and J.-M. Frahm, &ldquo;Pixelwise View Selection for Unstructured Multi-View Stereo,&rdquo; in <em>European Conference on Computer Vision (ECCV)</em>. Cham: Springer, 2016.</span>
+                </li>
+                <li id="ref-3">
+                  <span class="ref-num">[3]</span>
+                  <span>J. Wang, M. Chen, N. Karaev, A. Vedaldi, C. Rupprecht, and D. Novotny, &ldquo;VGGT: Visual Geometry Grounded Transformer.&rdquo;</span>
+                </li>
+                <li id="ref-4">
+                  <span class="ref-num">[4]</span>
+                  <span>Y. Wang et al., &ldquo;&pi;<sup>3</sup>: Permutation-Equivariant Visual Geometry Learning,&rdquo; Sep. 09, 2025, arXiv: arXiv:2507.13347.</span>
+                </li>
+                <li id="ref-5">
+                  <span class="ref-num">[5]</span>
+                  <span>B. Huang et al., &ldquo;2D Gaussian Splatting for Geometrically Accurate Radiance Fields,&rdquo; in <em>ACM SIGGRAPH 2024 Conference Papers</em>, 2024.</span>
+                </li>
+              </ol>
+            </div>
+          </div>
+          <!-- ===== end references ===== -->
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+
+
+
+
+
+
+
+
+<!-- <section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>@article{
+}</code></pre>
+  </div>
+</section> -->
+
+
+<footer class="footer">
+  <div class="container">
+
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+            This website is based on the <a
+              href="https://github.com/nerfies/nerfies.github.io">source code</a> from the Nerfies project and is licensed under a <a rel="license"
+                                                href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+          </p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+<!-- Load dependencies first -->
+<script src="Potree_1.8.2/libs/jquery/jquery-3.1.1.min.js"></script>
+<script src="Potree_1.8.2/libs/spectrum/spectrum.js"></script>
+<script src="Potree_1.8.2/libs/jquery-ui/jquery-ui.min.js"></script>
+<script src="Potree_1.8.2/libs/other/BinaryHeap.js"></script>
+<script src="Potree_1.8.2/libs/tween/tween.min.js"></script>
+<script src="Potree_1.8.2/libs/d3/d3.js"></script>
+<script src="Potree_1.8.2/libs/proj4/proj4.js"></script>
+<script src="Potree_1.8.2/libs/openlayers3/ol.js"></script>
+<script src="Potree_1.8.2/libs/i18next/i18next.js"></script>
+<script src="Potree_1.8.2/libs/jstree/jstree.js"></script>
+<script src="Potree_1.8.2/build/potree/potree.js"></script>
+<script src="Potree_1.8.2/libs/plasio/js/laslaz.js"></script>
+<script src="Potree_1.8.2/libs/three.js/build/three.js"></script>
+<script src="Potree_1.8.2/build/potree/potree.js"></script>
+
+
+<script type="module">
+
+window.viewer = new Potree.Viewer(document.getElementById("potree_render_area"));
+
+viewer.setEDLEnabled(true);
+viewer.setFOV(60);
+viewer.setPointBudget(1_000_000);
+viewer.loadSettingsFromURL();
+viewer.setBackground("white");
+
+viewer.setDescription("");
+
+// Global variables for material switching
+let globalPointcloud = null;
+
+viewer.loadGUI(() => {
+  viewer.setLanguage('en');
+  // Hide all sidebar sections by default
+  viewer.toggleSidebar();
+});
+
+// Load point cloud
+let url = "vggt_depth/metadata.json";
+
+Potree.loadPointCloud(url).then(e => {
+  let pointcloud = e.pointcloud;
+  let material = pointcloud.material;
+  
+  globalPointcloud = pointcloud; // Store global reference
+
+  material.activeAttributeName = "rgba";
+  material.minSize = 2;
+  material.pointSizeType = Potree.PointSizeType.ADAPTIVE;
+  material.intensityRange = [0, 65535]; // Set range for intensity
+
+  viewer.scene.addPointCloud(pointcloud);
+  viewer.fitToScreen();
+});
+
+</script>
+
+<script type="module">
+// ===== SECOND VIEWER =====
+window.viewer2 = new Potree.Viewer(document.getElementById("potree_render_area_2"));
+
+viewer2.setEDLEnabled(true);
+viewer2.setFOV(60);
+viewer2.setPointBudget(1_000_000);
+viewer2.setBackground("white");
+viewer2.setDescription("");
+
+Potree.loadPointCloud("vggt_depth_rot/metadata.json").then(e => {
+  let pointcloud = e.pointcloud;
+  let material = pointcloud.material;
+
+  material.activeAttributeName = "rgba";
+  material.minSize = 2;
+  material.pointSizeType = Potree.PointSizeType.ADAPTIVE;
+  material.intensityRange = [0, 65535];
+
+  viewer2.scene.addPointCloud(pointcloud);
+  viewer2.fitToScreen();
+});
+</script>
+
+<script type="module">
+
+import * as THREE from "./Potree_1.8.2/libs/three.js/build/three.module.js";
+
+// Create toolbar HTML (based on toolbar example)
+const elToolbar = $("#potree_toolbar");
+elToolbar.html(`
+  <span>
+    <div class="potree_toolbar_label">
+      RGB
+    </div>
+    <div>
+      <button id="rgbButton" style="background: #333; color: white; border: 1px solid #666; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px;">RGB</button>
+    </div>
+  </span>
+
+  <span class="potree_toolbar_separator" />
+
+  <span>
+    <div class="potree_toolbar_label">
+      Confidence
+    </div>
+    <div style="display: flex; align-items: center; justify-content: center; width: 100%;">
+      <div style="display: flex; flex-direction: column; gap: 2px; align-items: center;">
+        <span name="gradient_schemes"></span>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; margin-left: 2px; height: 100%; justify-content: space-between;">
+        <span style="font-size: 0.8em; color: #888; font-weight: bold;">High</span>
+        <span style="flex: 1;"></span>
+        <span style="font-size: 0.8em; color: #888;">Low</span>
+      </div>
+    </div>
+  </span>
+
+  <span class="potree_toolbar_separator" />
+
+  <span>
+    <div class="potree_toolbar_label">Dataset</div>
+    <div>
+      <select id="datasetSelect" style="background:#333; color:white; border:1px solid #666; padding:3px 5px; border-radius:3px; cursor:pointer; font-size:11px;">
+        <option value="vggt_depth">VGGT Depth</option>
+        <option value="vggt_point">VGGT Point</option>
+        <option value="pi3">π³</option>
+      </select>
+    </div>
+  </span>
+
+  <span class="potree_toolbar_separator" />
+
+  <span>
+    <div class="potree_toolbar_label">View</div>
+    <div style="display:flex; gap:3px;">
+      <button id="resetViewBtn" style="background:#333; color:white; border:1px solid #666; padding:4px 8px; border-radius:3px; cursor:pointer; font-size:11px;" title="Reset both viewers">↺ Reset</button>
+      <button id="syncBtn" style="background:#4a9eff; color:white; border:1px solid #4a9eff; padding:4px 8px; border-radius:3px; cursor:pointer; font-size:11px;" title="Sync cameras">🔗 Sync: ON</button>
+    </div>
+  </span>
+
+  <span style="flex:1;"></span>
+  <span class="potree_toolbar_separator" />
+
+  <span>
+    <div class="potree_toolbar_label">About</div>
+    <div>
+      <button name="action_about" style="background: #333; color: white; border: 1px solid #666; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px;">About</button>
+    </div>
+  </span>
+`);
+
+// Add about panel HTML
+$("#pc-section-wrapper").append(`
+  <div id="about_panel">
+    <h3>Industrial Object Dataset - Point Cloud Viewer</h3>
+    <p><strong style="color: #ccc;">Powered by:</strong> <a href="http://potree.org" target="_blank">Potree</a> - A viewer for large point cloud datasets</p>
+    <p><strong style="color: #ccc;">Controls:</strong> Click colormap strips to change visualization.</p>
+  </div>
+`);
+
+// CONTENT & ACTIONS
+
+{ // GRADIENT (only TURBO, VIRIDIS, GRAYSCALE, with legend and correct attribute)
+  const allowedSchemes = ["TURBO", "VIRIDIS", "GRAYSCALE"];
+  const schemes = allowedSchemes.map(name => ({name: name, values: Potree.Gradients[name]}));
+  const elGradientSchemes = elToolbar.find("span[name=gradient_schemes]");
+
+  for(const scheme of schemes){
+    const elButton = $(`
+      <span style="cursor: pointer; margin: 1px;" title="${scheme.name}"></span>
+    `);
+
+    const svg = Potree.Utils.createSvgGradient(scheme.values);
+    svg.setAttributeNS(null, "class", `button-icon`);
+    svg.style.height = "2em";
+    svg.style.width = "1.3em";
+
+    elButton.append($(svg));
+
+    elButton.click( () => {
+      [window.viewer, window.viewer2].forEach(v => {
+        if (!v) return;
+        v.scene.pointclouds.forEach( pc => {
+          pc.material.activeAttributeName = "intensity gradient";
+          pc.material.gradient = Potree.Gradients[scheme.name];
+          pc.material.intensityRange = [0, 65535];
+          if (typeof pc.material.updateShaderSource === 'function') {
+            pc.material.updateShaderSource();
+          } else {
+            pc.material.needsUpdate = true;
+          }
+        });
+      });
+      console.log('Applied gradient:', scheme.name);
+    });
+
+    elGradientSchemes.append(elButton);
+  }
+}
+
+{ // ABOUT FUNCTIONALITY
+  elToolbar.find("button[name=action_about]").click( () => {
+    const aboutPanel = $("#about_panel");
+    aboutPanel.toggle();
+  });
+
+  // Close about panel whenever a click lands outside the panel or the button
+  $(document).on('click', function(e) {
+    if (!$(e.target).closest('#about_panel, button[name=action_about]').length) {
+      $("#about_panel").hide();
+    }
+  });
+}
+
+// RGB button functionality
+$("#rgbButton").on("click", function() {
+  [window.viewer, window.viewer2].forEach(v => {
+    if (!v) return;
+    v.scene.pointclouds.forEach( pc => {
+      pc.material.activeAttributeName = "rgba";
+    });
+  });
+  console.log('Switched to RGB colors');
+});
+
+// Material dropdown logic (REMOVED - no longer needed)
+
+// ===== DATASET SWITCHER & VIEW CONTROLS =====
+const PC_SETS = {
+  'vggt_depth': { left: 'vggt_depth/metadata.json',  right: 'vggt_depth_rot/metadata.json' },
+  'vggt_point': { left: 'vggt_world/metadata.json',  right: 'vggt_world_rot/metadata.json' },
+  'pi3':        { left: 'pi3/metadata.json',          right: 'pi3_rot/metadata.json' }
+};
+
+function loadIntoViewer(v, url) {
+  // 1. Hide old clouds immediately so the render loop skips them
+  const oldPcs = v.scene.pointclouds.slice();
+  oldPcs.forEach(pc => { pc.visible = false; });
+
+  // 2. Load new cloud
+  return Potree.loadPointCloud(url).then(e => {
+    const pc = e.pointcloud;
+    pc.material.activeAttributeName = 'rgba';
+    pc.material.minSize = 2;
+    pc.material.pointSizeType = Potree.PointSizeType.ADAPTIVE;
+    pc.material.intensityRange = [0, 65535];
+    v.scene.addPointCloud(pc);
+    v.fitToScreen();
+
+    // 3. After several render frames, cleanly splice out the old clouds
+    setTimeout(() => {
+      oldPcs.forEach(old => {
+        const idx = v.scene.pointclouds.indexOf(old);
+        if (idx !== -1) v.scene.pointclouds.splice(idx, 1);
+        try { v.scene.scene.remove(old); } catch(_) {}
+      });
+    }, 200);
+  });
+}
+
+$('#datasetSelect').on('change', function() {
+  const set = PC_SETS[this.value];
+  if (!set || !window.viewer || !window.viewer2) return;
+  window._syncPaused = true;
+  window._syncResetState && window._syncResetState();
+  Promise.all([
+    loadIntoViewer(window.viewer,  set.left),
+    loadIntoViewer(window.viewer2, set.right)
+  ]).then(() => {
+    window._syncPaused = false;
+    window._syncResetState && window._syncResetState();    setTimeout(() => { window._updateLockedPositions && window._updateLockedPositions(); }, 900);  });
+});
+
+$('#resetViewBtn').on('click', function() {
+  window._syncPaused = true;
+  window._syncResetState && window._syncResetState();
+  if (window.viewer) {
+    window.viewer.fitToScreen();
+    window.viewer.scene.pointclouds.forEach(pc => { pc.material.activeAttributeName = 'rgba'; });
+  }
+  if (window.viewer2) {
+    window.viewer2.fitToScreen();
+    window.viewer2.scene.pointclouds.forEach(pc => { pc.material.activeAttributeName = 'rgba'; });
+  }
+  setTimeout(() => {
+    window._updateLockedPositions && window._updateLockedPositions();
+    window._syncPaused = false;
+    window._syncResetState && window._syncResetState();
+  }, 1200);
+});
+
+$('#syncBtn').on('click', function() {
+  window._syncOn = !window._syncOn;
+  $(this).text(window._syncOn ? '🔗 Sync: ON' : '🔗 Sync: OFF');
+  $(this).css({ background: window._syncOn ? '#4a9eff' : '#555', 'border-color': window._syncOn ? '#4a9eff' : '#666' });
+});
+
+</script>
+
+<script>
+window.addEventListener('load', function () {
+  var SHOW = 3;
+  var TOTAL = 9;
+  var INTERVAL = 4000;
+  var maxIdx = TOTAL - SHOW; // 0..6
+
+  var windowEl = document.querySelector('.synced-window');
+  var track    = document.querySelector('.synced-track');
+  var slides   = Array.from(document.querySelectorAll('.synced-slide'));
+  var dotsEl   = document.querySelector('.synced-dots');
+
+  var current = 0;
+  var timer   = null;
+
+  // Clone the first SHOW slides and append them so we can scroll seamlessly
+  // into them, then silently jump back to the real position.
+  var clones = [];
+  for (var c = 0; c < SHOW; c++) {
+    var clone = slides[c].cloneNode(true);
+    clone.setAttribute('aria-hidden', 'true');
+    track.appendChild(clone);
+    clones.push(clone);
+  }
+  // All slides including clones
+  var allSlides = Array.from(track.querySelectorAll('.synced-slide'));
+
+  // Build dot indicators (one per real position)
+  for (var i = 0; i <= maxIdx; i++) {
+    var dot = document.createElement('span');
+    dot.className = 'synced-dot' + (i === 0 ? ' active' : '');
+    (function (idx) { dot.addEventListener('click', function () { goToReal(idx); restartTimer(); }); })(i);
+    dotsEl.appendChild(dot);
+  }
+
+  function slideW() { return windowEl.offsetWidth / SHOW; }
+
+  function setWidths() {
+    var w = slideW();
+    allSlides.forEach(function (s) { s.style.width = w + 'px'; });
+  }
+
+  // Move track to absolute position pos (may be beyond maxIdx — into clones)
+  function moveTo(pos, animate) {
+    track.style.transition = animate ? '' : 'none';
+    track.style.transform = 'translateX(-' + (pos * slideW()) + 'px)';
+  }
+
+  // Go to a real slide index (0..maxIdx), always with animation
+  function goToReal(idx) {
+    current = ((idx % (maxIdx + 1)) + (maxIdx + 1)) % (maxIdx + 1);
+    moveTo(current, true);
+    document.querySelectorAll('.synced-dot').forEach(function (d, i) {
+      d.classList.toggle('active', i === current);
+    });
+  }
+
+  // Advance by one (used by timer and next button) — seamless wrap
+  function advance() {
+    var next = current + 1;
+    if (next <= maxIdx) {
+      // Normal slide
+      current = next;
+      moveTo(current, true);
+    } else {
+      // Slide into the clone of slide 0 (position maxIdx+1) with animation…
+      moveTo(maxIdx + 1, true);
+      // …then after the transition finishes, silently jump to real position 0
+      track.addEventListener('transitionend', function handler() {
+        track.removeEventListener('transitionend', handler);
+        current = 0;
+        moveTo(0, false);
+      });
+    }
+    document.querySelectorAll('.synced-dot').forEach(function (d, i) {
+      d.classList.toggle('active', i === current);
+    });
+  }
+
+  // Go back by one — seamless wrap in reverse
+  function retreat() {
+    if (current > 0) {
+      current--;
+      moveTo(current, true);
+    } else {
+      // Jump silently to clone position (maxIdx+1), then animate left to maxIdx
+      moveTo(maxIdx + 1, false);
+      // Force reflow so the instant jump registers before the transition
+      track.getBoundingClientRect();
+      current = maxIdx;
+      moveTo(current, true);
+    }
+    document.querySelectorAll('.synced-dot').forEach(function (d, i) {
+      d.classList.toggle('active', i === current);
+    });
+  }
+
+  function restartTimer() {
+    clearInterval(timer);
+    timer = setInterval(advance, INTERVAL);
+  }
+
+  // Firefox on hosted pages can report offsetWidth=0 at 'load' time when
+  // external fonts haven't finished painting. Retry until we get a real width.
+  function initCarousel() {
+    if (windowEl.offsetWidth === 0) {
+      setTimeout(initCarousel, 50);
+      return;
+    }
+    setWidths();
+    moveTo(0, false);
+    restartTimer();
+  }
+  initCarousel();
+
+  document.querySelector('.synced-prev').addEventListener('click', function () { retreat(); restartTimer(); });
+  document.querySelector('.synced-next').addEventListener('click', function () { advance(); restartTimer(); });
+
+  var section = document.querySelector('.synced-carousel-section');
+  section.addEventListener('mouseenter', function () { clearInterval(timer); });
+  section.addEventListener('mouseleave', function () { restartTimer(); });
+
+  window.addEventListener('resize', function () { setWidths(); moveTo(current, false); });
+});
+</script>
+
+<script>
+/* ===== CAMERA SYNC + PAN DISABLE =====
+   Potree view model:
+     getPivot() = position + direction × radius   (orbit target)
+     direction  = unit vector computed from yaw/pitch
+   When we copy yaw/pitch/radius from src to dst, direction changes
+   but position doesn't → getPivot() jumps → cloud flies off screen.
+   Fix: save dst's pivot first, apply new angles, then recompute
+     dst.position = saved_pivot - new_direction × new_radius
+   This keeps dst orbiting around its own cloud center.
+   ======================================================= */
+(function () {
+  window._syncOn     = true;
+  window._syncPaused = false;
+  var prev1 = null;
+  var prev2 = null;
+
+  function snap(view) {
+    return { yaw: view.yaw, pitch: view.pitch, radius: view.radius };
+  }
+
+  function rotChanged(prev, view) {
+    return prev &&
+      (view.yaw !== prev.yaw || view.pitch !== prev.pitch || view.radius !== prev.radius);
+  }
+
+  window._syncResetState        = function () { prev1 = null; prev2 = null; };
+  window._updateLockedPositions = window._syncResetState;
+
+  /* Copy yaw/pitch/radius from src to dst while keeping dst's pivot fixed */
+  function applyView(dst, src) {
+    var pivot = dst.getPivot();   // save BEFORE changing angles
+    dst.yaw    = src.yaw;
+    dst.pitch  = src.pitch;
+    dst.radius = src.radius;
+    var dir = dst.direction;      // recomputed from new yaw/pitch
+    dst.position.set(
+      pivot.x - dir.x * dst.radius,
+      pivot.y - dir.y * dst.radius,
+      pivot.z - dir.z * dst.radius
+    );
+  }
+
+  function disablePan(v) {
+    if (v && v.scene && v.scene.view) {
+      v.scene.view.pan = function () {};
+    }
+  }
+
+  function syncLoop() {
+    requestAnimationFrame(syncLoop);
+
+    if (!window.viewer || !window.viewer2) return;
+
+    var sv1 = window.viewer.scene.view;
+    var sv2 = window.viewer2.scene.view;
+
+    if (!window._syncOn || window._syncPaused) {
+      prev1 = snap(sv1);
+      prev2 = snap(sv2);
+      return;
+    }
+
+    var c1 = rotChanged(prev1, sv1);
+    var c2 = rotChanged(prev2, sv2);
+
+    if (c1 && !c2) {
+      applyView(sv2, sv1);
+    } else if (c2 && !c1) {
+      applyView(sv1, sv2);
+    }
+
+    prev1 = snap(sv1);
+    prev2 = snap(sv2);
+  }
+
+  window.addEventListener('load', function () {
+    disablePan(window.viewer);
+    disablePan(window.viewer2);
+    requestAnimationFrame(syncLoop);
+  });
+}());
+</script>
+
+</body>
+</html>
