@@ -171,13 +171,24 @@
       flex-direction: column;
       align-items: center;
       margin-bottom: 6px;
-      gap: 10px;
+      gap: 0;
+      height: 260px;              /* fixed so both columns are the same height */
+      justify-content: space-between;
+    }
+
+    /* Wrapper that vertically centers the image stack within the fixed-height hint area */
+    .viewer-image-stack-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     /* Stacked-photos deck wrapper */
     .viewer-image-stack {
       position: relative;
       display: inline-block;
+      width: 220px;
       /* extra margin so rotated ghost cards don't get clipped */
       margin: 8px 18px 4px 8px;
     }
@@ -210,8 +221,8 @@
     .viewer-image-stack img {
       position: relative;
       z-index: 2;
-      max-height: 200px;
-      width: auto;
+      width: 100%;
+      height: auto;
       border-radius: 7px;
       box-shadow: 0 4px 14px rgba(0,0,0,0.22);
       object-fit: contain;
@@ -236,7 +247,7 @@
     }
 
     .preprocessing-arrow-box {
-      margin-top: 105px; /* align vertically with the center of the sample images */
+      margin-top: 120px; /* align vertically with the center of the sample images */
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -384,7 +395,7 @@
             <span class="author-block">
               <a href="https://www.ipf.kit.edu/english/staff_hillemann.php">Markus Hillemann</a>,</span>
             <span class="author-block">
-              <a href="https://www.ipf.kit.edu/english/staff_1658.php">Markus Ulrich</a>,</span>
+              <a href="https://www.ipf.kit.edu/english/staff_1658.php">Markus Ulrich</a></span>
             </span>
 
           </div>
@@ -394,7 +405,7 @@
 
           </div>
 
-          <div class="column has-text-centered">
+          <div class="column has-text-centered">  
             <div class="publication-links">
               <!-- PDF Link. -->
               <span class="link-block">
@@ -442,8 +453,8 @@
             <strong>We introduce the Machine Vision Metrology Industrial Object Dataset
             (MVM-IOD)</strong>, for evaluating 3D reconstruction, camera pose estimation and novel view synthesis of complex industrial objects. The hardware setup to acquire MVM-IOD consists of a camera, mounted upside
             down due to space restrictions, at the end effector of an industrial robot arm. Images of typical industrial objects are captured
-            systematically, by moving the camera on a hemisphere around the objects.<strong> MVM-IOD contains the camera poses, the acquired RGB images,
-            and the 3D point cloud of 9 objects and 2 background choices resulting in 18 scenes</strong>, which allows evaluation of all image based
+            systematically, by moving the camera on a hemisphere around the objects.<strong> MVM-IOD contains the ground truth camera poses, the acquired RGB images,
+            and the ground truth 3D point cloud of 9 objects and 2 background choices (alu and green) resulting in 18 scenes</strong>, which allows evaluation of all image based
             methods that compute a 3D reconstruction, camera poses, and/or novel views.
             
 
@@ -522,6 +533,49 @@
           </div>
           <!-- ===== end carousel ===== -->
 
+          <!-- ===== DATASET CREATION ===== -->
+          <div class="dataset-creation-section" style="margin-top: 2.5rem;">
+            <h2 class="title is-3" style="margin-bottom: 1rem;">Dataset Creation</h2>
+            <div class="content has-text-justified">
+              <p>
+                MVM-IOD was acquired using an Universal Robots UR3e industrial robot arm with an IDS U3-31J0CP-C-HQ Rev.2.2 RGB camera mounted at its end effector.
+                For each object, we capture 300 images from the same camera poses. To this end, we perform a camera calibration as well a a hand-eye calibration beforehand.
+                We obtain the ground truth of the camera poses by composing the hand-eye pose with the robot poses known via forward kinematics.
+                The ground truth 3D point cloud of each object is obtained using a AS1 and AA85 line scan system from Hexagon with a system accuracy of 0.047 mm.
+              </p>
+            </div>
+            <div style="display: flex; align-items: flex-start; gap: 0; justify-content: center; margin-top: 1.5rem; flex-wrap: wrap;">
+              <!-- Left image -->
+              <figure style="flex: 1 1 300px; margin: 0; display: flex; flex-direction: column; align-items: center;">
+                <div style="height: 280px; display: flex; align-items: center; justify-content: center;">
+                  <img src="images/robot.jpg" alt="Robot arm setup used for data acquisition"
+                       style="height: 100%; width: auto; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.18); object-fit: contain; display: block;">
+                </div>
+                <figcaption style="text-align: center; font-size: 13px; color: #555; margin-top: 6px;">Capture setup: RGB camera mounted to the <br>end effector of an UR3e robot arm. Here,<br> object 6 is captured with background alu. </figcaption>
+              </figure>
+
+              <!-- Arrow between images -->
+              <div style="flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0 18px; align-self: center; margin-bottom: 22px;">
+                <p style="font-size: 10px; text-align: center; color: #555; line-height: 1.45; margin: 0; font-style: italic;">sample equidistant<br>camera poses <br> on a hemisphere</p>
+                <div style="position: relative; width: 70px; height: 2px; background: #888;">
+                  <div style="position: absolute; right: -1px; top: 50%; transform: translateY(-50%);
+                               border-left: 9px solid #888; border-top: 6px solid transparent; border-bottom: 6px solid transparent;"></div>
+                </div>
+              </div>
+
+              <!-- Right image -->
+              <figure style="flex: 1 1 300px; margin: 0; display: flex; flex-direction: column; align-items: center;">
+                <div style="height: 280px; display: flex; align-items: center; justify-content: center;">
+                  <img src="images/sphere.png" alt="Hemispherical camera trajectory"
+                       style="height: 100%; width: auto; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.18); object-fit: contain; display: block;">
+                </div>
+                <figcaption style="text-align: center; font-size: 13px; color: #555; margin-top: 6px;">Red pyramids visualize the sampled camera poses, <br>along with a SfM 3D reconstruction of object 6.<br></figcaption>
+              </figure>
+            </div>
+            <div style="margin-bottom: 1.5rem;"></div>
+          </div>
+          <!-- ===== end dataset creation ===== -->
+
           <!-- ===== EXPERIMENTS ===== -->
           <div class="experiments-section">
             <h2 class="title is-3" style="margin-bottom: 1rem;">Experiments</h2>
@@ -553,8 +607,10 @@
             <div class="viewer-col">
               <p class="viewer-label">Original Images</p>
               <div class="viewer-image-hint">
-                <div class="viewer-image-stack">
-                  <img src="images/frame_00240.png" alt="Sample frame (original)">
+                <div class="viewer-image-stack-wrap">
+                  <div class="viewer-image-stack">
+                    <img src="images/frame_00240.png" alt="Sample frame (original)">
+                  </div>
                 </div>
                 <span class="viewer-hint-arrow">&#8595;</span>
               </div>
@@ -573,8 +629,10 @@
             <div class="viewer-col">
               <p class="viewer-label">Preprocessed Images</p>
               <div class="viewer-image-hint">
-                <div class="viewer-image-stack">
-                  <img src="images/frame_00240_rot.png" alt="Sample frame (preprocessed)">
+                <div class="viewer-image-stack-wrap">
+                  <div class="viewer-image-stack">
+                    <img src="images/frame_00240_rot.png" alt="Sample frame (preprocessed)">
+                  </div>
                 </div>
                 <span class="viewer-hint-arrow">&#8595;</span>
               </div>
