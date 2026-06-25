@@ -14,7 +14,166 @@
         href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
   <link rel="stylesheet" href="../Industrial_objects/static/css/index.css">
 
+  <style>
+    /* References section */
+    .references-section {
+      margin-top: 2.5rem;
+      text-align: left;
+    }
+
+    .references-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #363636;
+    }
+
+    .references-list li {
+      display: flex;
+      gap: 0.6em;
+      margin-bottom: 0.6em;
+    }
+
+    .references-list li .ref-num {
+      flex-shrink: 0;
+      font-weight: 600;
+      color: #555;
+    }
+
+    /* Animation for sequential reveal */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-arrow-1 {
+      animation: fadeIn 0.8s ease-out forwards;
+      animation-delay: 0.5s;
+      opacity: 0;
+    }
+
+    .animate-arrow-2 {
+      animation: fadeIn 0.8s ease-out forwards;
+      animation-delay: 1.5s;
+      opacity: 0;
+    }
+
+    .animate-arrow-3 {
+      animation: fadeIn 0.8s ease-out forwards;
+      animation-delay: 2.5s;
+      opacity: 0;
+    }
+
+    .animate-image-1 {
+      animation: fadeIn 0.8s ease-out forwards;
+      animation-delay: 1.0s;
+      opacity: 0;
+    }
+
+    .animate-image-2 {
+      animation: fadeIn 0.8s ease-out forwards;
+      animation-delay: 2.0s;
+      opacity: 0;
+    }
+
+    .animate-image-3 {
+      animation: fadeIn 0.8s ease-out forwards;
+      animation-delay: 3.0s;
+      opacity: 0;
+    }
+
+    /* Lightbox styles */
+    .lightbox {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.9);
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      cursor: pointer;
+    }
+
+    .lightbox.active {
+      display: flex;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .lightbox img {
+      max-width: 90%;
+      max-height: 85vh;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .lightbox-caption {
+      color: #fff;
+      font-size: 16px;
+      margin-top: 1rem;
+      text-align: center;
+      padding: 0 1rem;
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      color: #fff;
+      font-size: 40px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+
+    .lightbox-close:hover {
+      color: #ccc;
+    }
+
+    .gallery-image {
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .gallery-image:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+  </style>
+
   <script defer src="../Industrial_objects/static/js/fontawesome.all.min.js"></script>
+
+<script>
+  function openLightbox(imageSrc, caption) {
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const lightboxCaption = document.getElementById('lightbox-caption');
+    
+    lightboxImg.src = imageSrc;
+    lightboxCaption.textContent = caption;
+    lightbox.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    const lightbox = document.getElementById('lightbox');
+    lightbox.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  // Close lightbox with Escape key
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+      closeLightbox();
+    }
+  });
+</script>
 </head>
 <body>
 
@@ -25,6 +184,15 @@
       <span aria-hidden="true"></span>
       <span aria-hidden="true"></span>
     </a>
+  </div>
+  <div class="navbar-menu">
+    <div class="navbar-start" style="flex-grow: 1; justify-content: center; display: flex;">
+      <a class="navbar-item" href="../index.html">
+      <span class="icon">
+          <i class="fas fa-home"></i>
+      </span>
+      </a>
+    </div>
   </div>
 </nav>
 
@@ -46,11 +214,320 @@
           <div class="is-size-5 publication-authors">
             <span class="author-block">Karlsruhe Institute of Technology</span>
           </div>
+
+            <div class="column has-text-centered">  
+            <div class="publication-links">
+              <!-- PDF Link. -->
+              <span class="link-block">
+                <a href="https://arxiv.org/abs/2606.14389"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+
+
+              <!-- Code Link. -->
+              <span class="link-block">
+                <a href="https://github.com/Pimpilimpo/MooMIns.git"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code (Coming soon)</span>
+                </a>
+              </span>
+
+            </div>
         </div>
       </div>
     </div>
   </div>
 </section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Figure with start.png above three ende images -->
+    <div style="margin-top: 2rem;">
+      <!-- Top image (start.png) - centered -->
+      <figure style="margin: 0 0 0.5rem 0; display: flex; flex-direction: column; align-items: center;">
+        <div style="height: 260px; display: flex; align-items: center; justify-content: center;">
+          <img src="images/start.png" alt="Input image"
+               style="max-height: 100%; width: auto; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.18); object-fit: contain; display: block;">
+        </div>
+        <figcaption style="text-align: center; font-size: 13px; color: #555; margin-top: 6px;">Input image showing multiple object instances of the same object</figcaption>
+      </figure>
+
+      <!-- Three arrows pointing down -->
+      <div style="position: relative; height: 100px; margin-bottom: 0.5rem;">
+        <!-- Left arrow (diagonal to left) -->
+        <div class="animate-arrow-1" style="position: absolute; left: 16.66%; top: 0;">
+          <div style="width: 2px; height: 95px; background: linear-gradient(to bottom, #888, #aaa); transform-origin: top center; transform: rotate(35deg);">
+            <div style="position: absolute; bottom: -10px; left: -7px; width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 10px solid #888;"></div>
+          </div>
+        </div>
+        <!-- Center arrow (straight down) -->
+        <div class="animate-arrow-2" style="position: absolute; left: 50%; top: 0; transform: translateX(-50%);">
+          <div style="width: 2px; height: 70px; background: linear-gradient(to bottom, #888, #aaa);">
+            <div style="position: absolute; bottom: -10px; left: -7px; width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 10px solid #888;"></div>
+          </div>
+        </div>
+        <!-- Right arrow (diagonal to right) -->
+        <div class="animate-arrow-3" style="position: absolute; right: 16.66%; top: 0;">
+          <div style="width: 2px; height: 95px; background: linear-gradient(to bottom, #888, #aaa); transform-origin: top center; transform: rotate(-35deg);">
+            <div style="position: absolute; bottom: -10px; left: -7px; width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 10px solid #888;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Three bottom images (ende_1.png, ende_2.png, ende_3.png) -->
+      <div style="display: flex; gap: 16px; justify-content: center; align-items: flex-start;">
+        <figure class="animate-image-1" style="margin: 0; display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 32%;">
+          <div style="height: 260px; display: flex; align-items: center; justify-content: center;">
+            <img src="images/ende_1.png" alt="Reconstruction result 1"
+                 style="max-height: 100%; width: auto; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.18); object-fit: contain; display: block;">
+          </div>
+          <figcaption style="text-align: center; font-size: 13px; color: #555; margin-top: 6px;">Object poses</figcaption>
+        </figure>
+        
+        <figure class="animate-image-2" style="margin: 0; display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 32%;">
+          <div style="height: 260px; display: flex; align-items: center; justify-content: center; background: transparent;">
+            <img src="images/ende_3.png" alt="Reconstruction result 2"
+                 style="max-height: 100%; width: auto; border-radius: 8px; object-fit: contain; display: block; background: transparent;"
+                                  referrerpolicy="no-referrer">
+          </div>
+          <figcaption style="text-align: center; font-size: 13px; color: #555; margin-top: 6px;">3D reconstruction</figcaption>
+        </figure>
+        
+        <figure class="animate-image-3" style="margin: 0; display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 32%;">
+          <div style="height: 260px; display: flex; align-items: center; justify-content: center;">
+            <img src="images/ende_2.png" alt="Reconstruction result 3"
+                 style="max-height: 100%; width: auto; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.18); object-fit: contain; display: block;">
+          </div>
+          <figcaption style="text-align: center; font-size: 13px; color: #555; margin-top: 6px;">Instance segmentation</figcaption>
+        </figure>
+      </div>
+    </div>
+    
+    <!-- Figure description -->
+    <div style="margin-top: 1rem; padding: 1rem; background: #f5f5f5; border-radius: 8px; text-align: center;">
+      <p style="font-size: 14px; color: #363636; line-height: 1.6;">
+       Visualization of the novel machine vision task. Given a multi-instance image, i.e.,
+a monocular image showing multiple instances of the same object from different perspectives
+(top),the task is to determine the 6D object poses (bottom left), along with the masks (bottom right) of all instances, and
+a 3D reconstruction of the canonical object (bottom middle). Images from the XYZ-IBD dataset <a href="#ref-3">[3]</a>.
+      </p>
+    </div>
+  </div>
+</section>
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Abstract. -->
+    <div class="columns is-centered">
+      <div class="column is-full has-text-left">
+        <h2 class="title is-3 has-text-centered">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+Simultaneous 3D reconstruction and 6D object pose estimation from a single monocular image is an inherently ill-posed problem. In industrial settings, however, multiple
+instances of an object are often randomly arranged in bins, implicitly providing several
+views of the same object within a single image. We show that this implicit multi-view geometry can be exploited to simultaneously reconstruct the object in 3D and estimate the
+6D pose of each visible object instance. We present MooMIns, a new Gaussian-splatting (GS)
+based approach <a href="#ref-5">[5]</a> that inverts the original GS formulation: instead of rendering a single scene from multiple cameras, we render multiple object instances from a
+single camera. Our method is initialized with SAM3 instance segmentation masks <a href="#ref-2">[2]</a> and a
+modified Structure from Motion (SfM) pipeline <a href="#ref-1">[1]</a>. In contrast to learned monocular depth
+estimation, we perform true geometry-based reconstruction from image evidence, avoiding hallucinations caused by training data priors. We evaluate MooMIns on synthetic and
+real bin-picking scenarios, and demonstrate accurate reconstruction of previously unseen
+objects as well as reliable pose estimation of individual instances
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-full has-text-left">
+        <h2 class="title is-3 has-text-centered">Method</h2>
+        <div class="content has-text-justified">
+          <p>
+            MooMINS uses a GS-based approach. For higher 3D reconstruction quality, we use a 2D GS <a href="#ref-6">[6]</a> backbone, specifically Spherical Voronoi (SV) <a href="#ref-4">[4]</a>, which seperates illumination from geometry. The input for MooMIns consists merely of a single calibrated multi-instance image. Then, in a zero-shot manner, we output the 6D object poses of all instances, the instance segmentation masks, and a 3D reconstruction of the canonical object via iterative optimization of our modified GS pipeline. Our modified GS pipeline is initialized from SfM extrinsics and SAM3 instance segmentation masks.
+            As GS is designed for rendering a single scene from multiple cameras, but MooMIns only inputs a single image and should render multiple object instances, we invert the formulation. This approach has several advantages:
+          </p>
+          <ol style="margin-top: 0.5rem; margin-bottom: 0.5rem;">
+            <li>The global lighting is consistent throughout the scene, such that inter- and intra object reflections are better modeled.</li>
+            <li>Multiple or all instances can be rendered at the same time, which implicitly introduces multi-view constraints for a consistent geometry estimation.</li>
+            <li>In each iteration of our modified GS pipeline, we can use the entire image with all the information of all object instances, which in the end leads to a smooth convergence, whereas conventional GS considers a different image at each iteration containing only a subset of the scene information, which usually leads to an unstable convergence with strong fluctuations.</li>
+          </ol>
+        </div>
+
+        <!-- Method Figure -->
+        <div style="margin-top: 2rem;">
+          <div style="display: flex; gap: 16px; justify-content: center; align-items: flex-start;">
+            <figure style="margin: 0; display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 32%;">
+              <div style="height: 260px; display: flex; align-items: center; justify-content: center;">
+                <img src="images/normal_gs.png" alt="Normal GS"
+                     style="max-height: 100%; width: auto; border-radius: 8px;  object-fit: contain; display: block;background: transparent;">
+              </div>
+              <figcaption style="text-align: center; font-size: 13px; color: #555; margin-top: 6px;">Standard GS</figcaption>
+            </figure>
+            
+            
+            <figure style="margin: 0; display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 32%;">
+              <div style="height: 260px; display: flex; align-items: center; justify-content: center;">
+                <img src="images/our_case.png" alt="Our method"
+                     style="max-height: 100%; width: auto; border-radius: 8px;  object-fit: contain; display: block;background: transparent;">
+              </div>
+              <figcaption style="text-align: center; font-size: 13px; color: #555; margin-top: 6px;">MooMIns (Ours)</figcaption>
+            </figure>
+          </div>
+        </div>
+        
+        <!-- Figure description -->
+        <div style="margin-top: 1rem; padding: 1rem; background: #f5f5f5; border-radius: 8px; text-align: center;">
+          <p style="font-size: 14px; color: #363636; line-height: 1.6;">
+            Comparison of scene composition between standard GS (left) and our modified GS pipeline (right). Instead of rendering a single scene from a different camera each iteration, we render multiple object instances, which all share the same geometry and render them from the same camera each iteration.
+            Geometry updates are performed on the canonical object, which is then transformed to the individual object instance poses by using the optimizable 6D object poses.
+          </p>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-full has-text-left">
+        <h2 class="title is-3 has-text-centered">Results</h2>
+        <div class="content has-text-justified">
+          <p>
+
+          </p>
+        </div>
+        
+        <!-- Results Figure -->
+        <div style="margin-top: 2rem;">
+          <div style="display: flex; gap: 16px; justify-content: center; align-items: flex-start;">
+            <figure style="margin: 0; display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 32%;">
+              <div style="height: 260px; display: flex; align-items: center; justify-content: center;">
+                <img src="images/000004_000000.png" alt="Input image"
+                     class="gallery-image"
+                     style="max-height: 100%; width: auto; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.18); object-fit: contain; display: block;"
+                     onclick="openLightbox('images/000004_000000.png', 'Input image')">
+              </div>
+              <figcaption style="text-align: center; font-size: 13px; color: #555; margin-top: 6px;">Input image</figcaption>
+            </figure>
+            
+            <figure style="margin: 0; display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 32%;">
+              <div style="height: 260px; display: flex; align-items: center; justify-content: center;">
+                <img src="images/full_render2.png" alt="Full render"
+                     class="gallery-image"
+                     style="max-height: 100%; width: auto; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.18); object-fit: contain; display: block;"
+                     onclick="openLightbox('images/full_render2.png', 'Novel view synthesis')">
+              </div>
+              <figcaption style="text-align: center; font-size: 13px; color: #555; margin-top: 6px;">Rendered Image</figcaption>
+            </figure>
+            
+            <figure style="margin: 0; display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 32%;">
+              <div style="height: 260px; display: flex; align-items: center; justify-content: center;">
+                <img src="images/mesh2.png" alt="Mesh reconstruction"
+                     class="gallery-image"
+                     style="max-height: 100%; width: auto; border-radius: 8px; background: transparent; object-fit: contain; display: block;"
+                     onclick="openLightbox('images/mesh2.png', 'Mesh reconstruction')">
+              </div>
+              <figcaption style="text-align: center; font-size: 13px; color: #555; margin-top: 6px;">3D reconstruction mesh</figcaption>
+            </figure>
+          </div>
+        </div>
+                <!-- Figure description -->
+    <div style="margin-top: 1rem; padding: 1rem; background: #f5f5f5; border-radius: 8px; text-align: center;">
+      <p style="font-size: 14px; color: #363636; line-height: 1.6;">
+        We show qualitative results of MooMIns on a real multi-instance image (left). The final masked and rendered image (middle) consists of multiple object instances with shared geometry. The 3D reconstruction mesh (right) is generated by extracting the mesh of the canonical object.
+      </p>
+    </div>
+        
+        <!-- Additional text block -->
+        <div style="margin-top: 1rem;">
+          <p>
+For more results, please refer to the <a href="https://arxiv.org/abs/2606.14389">paper</a>.
+          </p>
+        </div>
+          </div>
+        </div>
+
+        <!-- Lightbox Modal -->
+        <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+          <span class="lightbox-close">&times;</span>
+          <img id="lightbox-img" src="" alt="Enlarged view">
+          <div id="lightbox-caption" class="lightbox-caption"></div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title  is-3 has-text-centered">BibTeX</h2>
+    <pre><code>@misc{langendörfer2026moominsmonocular3d,
+      title={MooMIns -- Monocular 3D Reconstruction and Object Pose Estimation from Multiple Instances}, 
+      author={Robert Langendörfer and Markus Hillemann and Markus Ulrich},
+      year={2026},
+      eprint={2606.14389},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2606.14389}, 
+}</code></pre>
+  </div>
+</section>
+
+<section class="section">   
+  <div class="container is-max-desktop">
+    <div class="references-section">
+      <h2 class="title is-3 has-text-centered" style="margin-bottom: 1rem;">References</h2>
+      <div class="content">
+      <ol class="references-list">
+        <li id="ref-1">
+          <span class="ref-num">[1]</span>
+          <span>J. L. Sch&ouml;nberger and J.-M. Frahm, &ldquo;Structure-from-Motion Revisited,&rdquo; in <em>Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)</em>, pp. 4104&ndash;4113, 2016.</span>
+        </li>
+        <li id="ref-2">
+          <span class="ref-num">[2]</span>
+          <span>N. Carion et al., &ldquo;SAM 3: Segment Anything with Concepts,&rdquo; <em>arXiv preprint arXiv:2511.16719</em>, 2025.</span>
+        </li>
+        <li id="ref-3">
+          <span class="ref-num">[3]</span>
+          <span>J. Huang et al., &ldquo;XYZ-IBD: A High-Precision Bin-Picking Dataset for Object 6D Pose Estimation Capturing Real-World Industrial Complexity,&rdquo; <em>arXiv preprint arXiv:2506.00599</em>, 2025.</span>
+        </li>
+        <li id="ref-4">
+          <span class="ref-num">[4]</span>
+          <span>F. Di Sario et al., &ldquo;Spherical Voronoi: Directional Appearance as a Differentiable Partition of the Sphere,&rdquo; in <em>Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)</em>, pp. 22529&ndash;22538, 2026.</span>
+        </li>
+        <li id="ref-5">
+          <span class="ref-num">[5]</span>
+          <span>B. Kerbl et al., &ldquo;3D Gaussian Splatting for Real-Time Radiance Field Rendering,&rdquo; <em>ACM Transactions on Graphics</em>, vol. 42, no. 4, p. 139, 2023.</span>
+        </li>
+        <li id="ref-6">
+          <span class="ref-num">[6]</span>
+          <span>B. Huang et al., &ldquo;2D Gaussian Splatting for Geometrically Accurate Radiance Fields,&rdquo; in <em>ACM SIGGRAPH 2024 Conference Papers</em>, pp. 1&ndash;11, 2024.</span>
+        </li>
+      </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+
 
 <footer class="footer">
   <div class="container">
